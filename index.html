@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>RepeatSeq Analyzer - 暗号文反復パターン可視化ツール</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🔁 RepeatSeq Analyzer</h1>
+    <p>暗号文の中にある反復文字列（3文字以上）を検出・可視化し、鍵長推定に活用します。</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>🔤 暗号文の入力</h2>
+      <textarea id="ciphertext" rows="10" placeholder="ここに暗号文を貼り付けてください（英大文字のみ）"></textarea>
+      <div>
+        <label><input type="checkbox" id="ignore-spaces" checked> 空白・記号を除去して処理</label>
+      </div>
+      <button id="analyze-btn">🔍 解析する</button>
+    </section>
+
+    <section>
+      <h2>🖍 ハイライト結果</h2>
+      <div id="highlighted-text" class="output-box">（ここにハイライト表示）</div>
+    </section>
+
+    <section>
+      <h2>📋 検出された反復文字列</h2>
+      <table id="result-table">
+        <thead>
+          <tr>
+            <th>文字列</th>
+            <th>長さ</th>
+            <th>1回目位置</th>
+            <th>2回目位置</th>
+            <th>間隔</th>
+            <th>公約数</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 検出結果がここに表示される -->
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>🧠 鍵長の候補（推定）</h2>
+      <div id="keylength-hints" class="output-box">（公約数に基づく候補がここに表示されます）</div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer">
+      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/repeatseq-analyzer" target="_blank">ipusiron/repeatseq-analyzer</a> ）
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
