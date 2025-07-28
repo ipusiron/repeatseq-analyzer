@@ -96,6 +96,24 @@ th {
   background-color: #eee;
 }
 
+/* ソート可能なヘッダー */
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+th.sortable:hover {
+  background-color: #ddd;
+}
+
+.sort-indicator {
+  font-size: 0.8em;
+  margin-left: 0.3rem;
+  color: #666;
+}
+
 /* ハイライト */
 .highlight {
   background-color: #fff2ac;

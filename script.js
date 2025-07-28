@@ -3,6 +3,10 @@ const ITEMS_PER_PAGE = 20;
 let currentPage = 1;
 let allMatches = [];
 
+// ソート設定
+let currentSortColumn = 'len';
+let sortDirection = 'desc'; // 'asc' or 'desc'
+
 // ドラッグアンドドロップ機能
 const dropZone = document.getElementById("drop-zone");
 const cipherTextArea = document.getElementById("ciphertext");
@@ -111,6 +115,9 @@ document.getElementById("analyze-btn").addEventListener("click", () => {
   // グローバル変数に保存
   allMatches = matches;
   currentPage = 1;
+  
+  // 初期ソート（長さの降順）
+  sortMatches();
 
   renderHighlights(cleanedText, matches);
   renderTableWithPagination();
@@ -196,6 +203,66 @@ function renderTableWithPagination() {
   } else {
     paginationControls.style.display = "none";
   }
+}
+
+// ソート機能
+function sortMatches() {
+  allMatches.sort((a, b) => {
+    let aVal = a[currentSortColumn];
+    let bVal = b[currentSortColumn];
+    
+    // 文字列の場合
+    if (currentSortColumn === 'seq') {
+      aVal = aVal.toLowerCase();
+      bVal = bVal.toLowerCase();
+    }
+    
+    if (sortDirection === 'asc') {
+      return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+    } else {
+      return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+    }
+  });
+}
+
+// ソートヘッダーのクリックイベント
+document.addEventListener('DOMContentLoaded', () => {
+  const sortableHeaders = document.querySelectorAll('.sortable');
+  
+  sortableHeaders.forEach(header => {
+    header.addEventListener('click', () => {
+      const column = header.dataset.column;
+      
+      // 同じ列をクリックした場合は方向を反転
+      if (currentSortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSortColumn = column;
+        sortDirection = 'desc'; // 新しい列は降順から始める
+      }
+      
+      // ソート実行
+      sortMatches();
+      currentPage = 1; // 最初のページに戻る
+      renderTableWithPagination();
+      
+      // ソートインジケーターを更新
+      updateSortIndicators();
+    });
+  });
+});
+
+// ソートインジケーターを更新
+function updateSortIndicators() {
+  const headers = document.querySelectorAll('.sortable');
+  headers.forEach(header => {
+    const indicator = header.querySelector('.sort-indicator');
+    if (header.dataset.column === currentSortColumn) {
+      indicator.textContent = sortDirection === 'asc' ? '▲' : '▼';
+    } else {
+      indicator.textContent = '';
+    }
+  });
 }
 
 function renderKeylengthHints(matches) {
