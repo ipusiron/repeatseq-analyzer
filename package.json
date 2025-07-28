@@ -1,0 +1,25 @@
+{
+  "name": "repeatseq-analyzer",
+  "version": "1.0.0",
+  "description": "![GitHub Repo stars](https://img.shields.io/github/stars/ipusiron/repeatseq-analyzer?style=social) ![GitHub forks](https://img.shields.io/github/forks/ipusiron/repeatseq-analyzer?style=social) ![GitHub last commit](https://img.shields.io/github/last-commit/ipusiron/repeatseq-analyzer) ![GitHub license](https://img.shields.io/github/license/ipusiron/repeatseq-analyzer)",
+  "main": "script.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ipusiron/repeatseq-analyzer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ipusiron/repeatseq-analyzer/issues"
+  },
+  "homepage": "https://github.com/ipusiron/repeatseq-analyzer#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.54.1",
+    "@types/node": "^24.1.0"
+  }
+}
