@@ -7,6 +7,9 @@ let allMatches = [];
 let currentSortColumn = 'len';
 let sortDirection = 'desc'; // 'asc' or 'desc'
 
+// フィルター設定
+let activeLengthFilters = new Set();
+
 // ドラッグアンドドロップ機能
 const dropZone = document.getElementById("drop-zone");
 const cipherTextArea = document.getElementById("ciphertext");
@@ -118,6 +121,9 @@ document.getElementById("analyze-btn").addEventListener("click", () => {
   
   // 初期ソート（長さの降順）
   sortMatches();
+  
+  // フィルターコントロールを生成
+  generateLengthFilters();
 
   renderHighlights(cleanedText, matches);
   renderTableWithPagination();
@@ -167,11 +173,17 @@ function renderTableWithPagination() {
   const tbody = document.querySelector("#result-table tbody");
   tbody.innerHTML = "";
 
+  // フィルタリング - フィルタが何も選択されていない場合は空の配列を表示
+  let filteredMatches = [];
+  if (activeLengthFilters.size > 0) {
+    filteredMatches = allMatches.filter(match => activeLengthFilters.has(match.len));
+  }
+
   // ページネーション計算
-  const totalPages = Math.ceil(allMatches.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredMatches.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allMatches.length);
-  const pageMatches = allMatches.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredMatches.length);
+  const pageMatches = filteredMatches.slice(startIndex, endIndex);
 
   // テーブル行を描画
   pageMatches.forEach(({ seq, len, first, second, gap, divisors }) => {
@@ -194,9 +206,9 @@ function renderTableWithPagination() {
   const prevBtn = document.getElementById("prev-page");
   const nextBtn = document.getElementById("next-page");
 
-  if (allMatches.length > ITEMS_PER_PAGE) {
+  if (filteredMatches.length > ITEMS_PER_PAGE) {
     paginationControls.style.display = "block";
-    pageInfo.textContent = `${currentPage} / ${totalPages} ページ (全 ${allMatches.length} 件)`;
+    pageInfo.textContent = `${currentPage} / ${totalPages} ページ (全 ${filteredMatches.length} 件)`;
     
     prevBtn.disabled = currentPage === 1;
     nextBtn.disabled = currentPage === totalPages;
@@ -264,6 +276,71 @@ function updateSortIndicators() {
     }
   });
 }
+
+// フィルターコントロールを生成
+function generateLengthFilters() {
+  const lengthFiltersDiv = document.getElementById("length-filters");
+  lengthFiltersDiv.innerHTML = "";
+  
+  // 検出された全ての長さを取得
+  const lengths = new Set(allMatches.map(m => m.len));
+  const sortedLengths = Array.from(lengths).sort((a, b) => a - b);
+  
+  // 初期状態で全ての長さを選択
+  activeLengthFilters = new Set(sortedLengths);
+  
+  // チェックボックスを生成
+  sortedLengths.forEach(len => {
+    const label = document.createElement("label");
+    label.className = "length-filter-label";
+    
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = len;
+    checkbox.checked = true;
+    checkbox.addEventListener("change", handleFilterChange);
+    
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(` ${len}文字`));
+    
+    lengthFiltersDiv.appendChild(label);
+  });
+}
+
+// フィルター変更時の処理
+function handleFilterChange(event) {
+  const length = parseInt(event.target.value);
+  
+  if (event.target.checked) {
+    activeLengthFilters.add(length);
+  } else {
+    activeLengthFilters.delete(length);
+  }
+  
+  currentPage = 1;
+  renderTableWithPagination();
+}
+
+// 全選択・全解除ボタンのイベントリスナー
+document.getElementById("select-all-btn").addEventListener("click", () => {
+  const checkboxes = document.querySelectorAll("#length-filters input[type='checkbox']");
+  checkboxes.forEach(cb => {
+    cb.checked = true;
+    activeLengthFilters.add(parseInt(cb.value));
+  });
+  currentPage = 1;
+  renderTableWithPagination();
+});
+
+document.getElementById("clear-all-btn").addEventListener("click", () => {
+  const checkboxes = document.querySelectorAll("#length-filters input[type='checkbox']");
+  checkboxes.forEach(cb => {
+    cb.checked = false;
+  });
+  activeLengthFilters.clear();
+  currentPage = 1;
+  renderTableWithPagination();
+});
 
 function renderKeylengthHints(matches) {
   const allDivisors = matches.map(m => m.divisors).flat();

@@ -164,6 +164,63 @@ th.sortable:hover {
   color: #357ac9;
 }
 
+/* フィルターコントロール */
+.filter-controls {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.filter-label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.length-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.length-filter-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.length-filter-label:hover {
+  background-color: #e9ecef;
+}
+
+.length-filter-label input[type="checkbox"] {
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.filter-btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-right: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.filter-btn:hover {
+  background-color: #5a6268;
+}
+
 /* ページネーション */
 #pagination-controls {
   display: flex;
