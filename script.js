@@ -14,6 +14,9 @@ let activeLengthFilters = new Set();
 let hideShortKeys = false;
 let hideLongKeys = false;
 
+// ダークモード設定
+let isDarkMode = false;
+
 // ドラッグアンドドロップ機能
 const dropZone = document.getElementById("drop-zone");
 const cipherTextArea = document.getElementById("ciphertext");
@@ -409,3 +412,45 @@ function showKeylengthWarning(hints) {
     warningElement.style.display = "none";
   }
 }
+
+// ダークモード機能
+function initializeDarkMode() {
+  // ローカルストレージから設定を読み込み
+  const savedTheme = localStorage.getItem('theme');
+  isDarkMode = savedTheme === 'dark';
+  
+  // 初期設定を適用
+  applyTheme();
+  updateDarkModeIcon();
+}
+
+function toggleDarkMode() {
+  isDarkMode = !isDarkMode;
+  applyTheme();
+  updateDarkModeIcon();
+  
+  // ローカルストレージに保存
+  localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+}
+
+function applyTheme() {
+  const body = document.body;
+  if (isDarkMode) {
+    body.setAttribute('data-theme', 'dark');
+  } else {
+    body.removeAttribute('data-theme');
+  }
+}
+
+function updateDarkModeIcon() {
+  const icon = document.querySelector('.dark-mode-icon');
+  icon.textContent = isDarkMode ? '☀️' : '🌙';
+}
+
+// ダークモードトグルボタンのイベントリスナー
+document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
+
+// ページ読み込み時にダークモードを初期化
+document.addEventListener('DOMContentLoaded', () => {
+  initializeDarkMode();
+});
