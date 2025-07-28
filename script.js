@@ -10,6 +10,10 @@ let sortDirection = 'desc'; // 'asc' or 'desc'
 // フィルター設定
 let activeLengthFilters = new Set();
 
+// 鍵長候補フィルター設定
+let hideShortKeys = false;
+let hideLongKeys = false;
+
 // ドラッグアンドドロップ機能
 const dropZone = document.getElementById("drop-zone");
 const cipherTextArea = document.getElementById("ciphertext");
@@ -342,6 +346,17 @@ document.getElementById("clear-all-btn").addEventListener("click", () => {
   renderTableWithPagination();
 });
 
+// 鍵長候補フィルターのイベントリスナー
+document.getElementById("hide-short-keys").addEventListener("change", (e) => {
+  hideShortKeys = e.target.checked;
+  renderKeylengthHints(allMatches);
+});
+
+document.getElementById("hide-long-keys").addEventListener("change", (e) => {
+  hideLongKeys = e.target.checked;
+  renderKeylengthHints(allMatches);
+});
+
 function renderKeylengthHints(matches) {
   const allDivisors = matches.map(m => m.divisors).flat();
   const freq = {};
@@ -350,11 +365,47 @@ function renderKeylengthHints(matches) {
     freq[d] = (freq[d] || 0) + 1;
   });
 
-  const hints = Object.entries(freq)
+  let hints = Object.entries(freq)
     .sort((a, b) => b[1] - a[1])  // 頻度順
-    .map(([k, v]) => `長さ ${k}（${v} 回）`);
+    .map(([k, v]) => ({ length: parseInt(k), count: v, text: `長さ ${k}（${v} 回）` }));
 
+  // フィルタリング適用
+  const originalHints = [...hints];
+  if (hideShortKeys) {
+    hints = hints.filter(h => h.length > 3);
+  }
+  if (hideLongKeys) {
+    hints = hints.filter(h => h.length < 20);
+  }
+
+  // 表示
   document.getElementById("keylength-hints").textContent = hints.length
-    ? hints.join(", ")
+    ? hints.map(h => h.text).join(", ")
     : "該当する公約数がありません。";
+
+  // 警告メッセージの表示
+  showKeylengthWarning(originalHints);
+}
+
+function showKeylengthWarning(hints) {
+  const warningElement = document.getElementById("keylength-warning");
+  const hasShortKeys = hints.some(h => h.length <= 3);
+  const hasLongKeys = hints.some(h => h.length >= 20);
+  
+  let warningMessages = [];
+  
+  if (hasShortKeys) {
+    warningMessages.push("鍵長3以下は古典暗号では可能性が低いとされています");
+  }
+  
+  if (hasLongKeys) {
+    warningMessages.push("鍵長20以上は手動暗号では現実的でない可能性があります");
+  }
+  
+  if (warningMessages.length > 0) {
+    warningElement.textContent = `⚠️ ${warningMessages.join("。")}。`;
+    warningElement.style.display = "block";
+  } else {
+    warningElement.style.display = "none";
+  }
 }

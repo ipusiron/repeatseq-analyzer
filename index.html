@@ -67,7 +67,20 @@
 
     <section>
       <h2>🧠 鍵長の候補（推定）</h2>
+      <div class="keylength-controls">
+        <label class="toggle-label">
+          <input type="checkbox" id="hide-short-keys" class="toggle-checkbox">
+          <span class="toggle-slider"></span>
+          鍵長3以下を非表示
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="hide-long-keys" class="toggle-checkbox">
+          <span class="toggle-slider"></span>
+          鍵長20以上を非表示
+        </label>
+      </div>
       <div id="keylength-hints" class="output-box">（公約数に基づく候補がここに表示されます）</div>
+      <div id="keylength-warning" class="warning-message" style="display: none;"></div>
     </section>
   </main>
 
