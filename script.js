@@ -94,8 +94,12 @@ document.getElementById("analyze-btn").addEventListener("click", () => {
     cleanedText = cleanedText.replace(/[^A-Z]/g, '');
   }
 
+  // 暗号種別の事前判定
+  const cipherTypeResult = detectCipherType(cleanedText);
+  displayCipherTypeAnalysis(cipherTypeResult);
+
   const minLen = 3;
-  const maxLen = 10; // 検出する最大長
+  const maxLen = 25; // 検出する最大長
 
   const matches = [];
   const seen = {};
@@ -165,6 +169,74 @@ document.getElementById("next-page").addEventListener("click", () => {
   }
 });
 
+// 一致指数（Index of Coincidence）を計算
+function calculateIC(text) {
+  if (text.length < 2) return 0;
+  
+  const freq = {};
+  for (const char of text) {
+    freq[char] = (freq[char] || 0) + 1;
+  }
+  
+  const n = text.length;
+  let sum = 0;
+  for (const count of Object.values(freq)) {
+    sum += count * (count - 1);
+  }
+  
+  return sum / (n * (n - 1));
+}
+
+// 暗号種別を判定
+function detectCipherType(text) {
+  const ic = calculateIC(text);
+  const textLength = text.length;
+  
+  // テキストが短すぎる場合の警告
+  if (textLength < 100) {
+    return {
+      type: "insufficient_data",
+      ic: ic,
+      confidence: "low",
+      message: "暗号文が短すぎます（100文字未満）。正確な判定には更に長い暗号文が必要です。",
+      recommendation: "より長い暗号文で再試行することを推奨します。",
+      allowAnalysis: true
+    };
+  }
+  
+  // IC値による判定（英語基準）
+  if (ic > 0.060) {
+    return {
+      type: "monoalphabetic",
+      ic: ic,
+      confidence: ic > 0.065 ? "high" : "medium",
+      message: `一致指数（IC）: ${ic.toFixed(4)} - 単一換字式暗号の可能性が高いです。`,
+      recommendation: "頻度分析による解読を推奨します。各文字の出現頻度を分析してください。",
+      allowAnalysis: true,
+      frequencyAnalysisLink: true
+    };
+  } else if (ic < 0.045) {
+    return {
+      type: "polyalphabetic",
+      ic: ic,
+      confidence: ic < 0.040 ? "high" : "medium", 
+      message: `一致指数（IC）: ${ic.toFixed(4)} - 多表式暗号（ヴィジュネル暗号等）の可能性が高いです。`,
+      recommendation: "カシスキー検査法による鍵長推定が有効です。反復文字列の検出を実行してください。",
+      allowAnalysis: true
+    };
+  } else {
+    return {
+      type: "uncertain",
+      ic: ic,
+      confidence: "medium",
+      message: `一致指数（IC）: ${ic.toFixed(4)} - 暗号種別の判定が困難です。`,
+      recommendation: "両方の手法を試すことを推奨します。まず頻度分析を行い、効果がない場合はカシスキー検査法を試してください。",
+      allowAnalysis: true,
+      frequencyAnalysisLink: true
+    };
+  }
+}
+
 // 公約数（1以外）を取得
 function getDivisors(n) {
   const divs = [];
@@ -174,7 +246,125 @@ function getDivisors(n) {
   return divs;
 }
 
-// 信頼度スコアを計算
+// パターンの複雑性スコアを計算
+function getPatternComplexity(seq) {
+  const uniqueChars = new Set(seq).size;
+  const complexity = uniqueChars / seq.length;
+  
+  // 同じ文字の連続をチェック
+  const hasRepeats = /(.)\1{2,}/.test(seq);
+  
+  // 単調増加・減少パターンをチェック
+  const isMonotonic = isSequentialPattern(seq);
+  
+  if (complexity >= 0.8 && !hasRepeats && !isMonotonic) return 15; // 高複雑性
+  if (complexity >= 0.6 && !hasRepeats) return 10; // 中複雑性
+  if (complexity >= 0.4) return 5;  // 低複雑性
+  return 0; // 単純すぎる
+}
+
+// 単調パターンの検出
+function isSequentialPattern(seq) {
+  if (seq.length < 3) return false;
+  
+  let increasing = true;
+  let decreasing = true;
+  
+  for (let i = 1; i < seq.length; i++) {
+    const diff = seq.charCodeAt(i) - seq.charCodeAt(i - 1);
+    if (diff !== 1) increasing = false;
+    if (diff !== -1) decreasing = false;
+  }
+  
+  return increasing || decreasing;
+}
+
+// 言語学的妥当性スコア
+function getLinguisticScore(seq) {
+  // 英語の一般的なパターン
+  const commonPatterns = ['THE', 'AND', 'ING', 'ION', 'TIO', 'ERE', 'HER', 'ATE', 'VER', 'TER', 'EST'];
+  const commonBigrams = ['TH', 'HE', 'IN', 'ER', 'AN', 'RE', 'ED', 'ND', 'ON', 'EN'];
+  
+  // 一般的なパターンが含まれているかチェック
+  for (const pattern of commonPatterns) {
+    if (seq.includes(pattern)) return 10;
+  }
+  
+  // バイグラム評価
+  let bigramScore = 0;
+  for (let i = 0; i < seq.length - 1; i++) {
+    const bigram = seq.substring(i, i + 2);
+    if (commonBigrams.includes(bigram)) {
+      bigramScore += 2;
+    }
+  }
+  
+  return Math.min(8, bigramScore);
+}
+
+// 相互検証スコア
+function getCrossValidationScore(currentMatch, allMatches) {
+  const currentDivisors = new Set(currentMatch.divisors.filter(d => d >= 3 && d <= 20));
+  let validationCount = 0;
+  let strongValidationCount = 0;
+  
+  allMatches.forEach(match => {
+    if (match !== currentMatch) {
+      const otherDivisors = match.divisors.filter(d => d >= 3 && d <= 20);
+      const overlap = otherDivisors.filter(d => currentDivisors.has(d)).length;
+      
+      if (overlap >= 3) strongValidationCount++;
+      else if (overlap >= 2) validationCount++;
+    }
+  });
+  
+  if (strongValidationCount >= 2) return 20; // 非常に強い相互検証
+  if (strongValidationCount >= 1) return 15; // 強い相互検証
+  if (validationCount >= 3) return 12;
+  if (validationCount >= 2) return 8;
+  if (validationCount >= 1) return 4;
+  return 0;
+}
+
+// 統計的有意性スコア
+function getStatisticalSignificance(seq, gap, textLength) {
+  const patternLength = seq.length;
+  
+  // 偶然の一致確率を計算
+  const randomProb = Math.pow(1/26, patternLength);
+  const possiblePositions = textLength - patternLength + 1;
+  const expectedOccurrences = possiblePositions * randomProb;
+  
+  // 実際に2回以上出現している場合の有意性
+  if (expectedOccurrences < 0.001) return 15; // 極めて稀
+  if (expectedOccurrences < 0.01) return 12;  // 非常に稀
+  if (expectedOccurrences < 0.1) return 8;    // 稀
+  if (expectedOccurrences < 0.5) return 4;    // やや稀
+  return 0; // 十分起こりうる
+}
+
+// 位置の周期性スコア
+function getPositionalConsistency(match, potentialKeyLengths) {
+  let bestScore = 0;
+  
+  // 推定される鍵長候補との整合性をチェック
+  for (const keyLen of potentialKeyLengths) {
+    if (keyLen < 3 || keyLen > 20) continue;
+    
+    const pos1Mod = match.first % keyLen;
+    const pos2Mod = match.second % keyLen;
+    
+    if (pos1Mod === pos2Mod) {
+      bestScore = Math.max(bestScore, 15); // 完全一致
+    } else if (Math.abs(pos1Mod - pos2Mod) <= 1) {
+      bestScore = Math.max(bestScore, 8);  // ほぼ一致
+    }
+  }
+  
+  return bestScore;
+}
+
+// 信頼度スコアを計算（簡略版 - パフォーマンス優先）
 function calculateConfidenceScores(matches) {
   // 各文字列の出現回数をカウント
   const sequenceFreq = {};
@@ -249,6 +439,54 @@ function getConfidenceClass(confidence) {
   } else {
     return 'confidence-very-low';
   }
+}
+
+// 信頼度スコアの詳細ツールチップを生成
+function getConfidenceTooltip(confidence, match) {
+  const { len, gap, divisors } = match;
+  
+  // 各要素のスコア計算（再現）
+  let lengthScore = 0;
+  if (len >= 8) {
+    lengthScore = 40;
+  } else if (len >= 5) {
+    lengthScore = 25 + (len - 5) * 5;
+  } else {
+    lengthScore = len * 5;
+  }
+  
+  let gapScore = 0;
+  if (gap >= 10 && gap <= 100) {
+    gapScore = 20;
+  } else if (gap >= 5 && gap <= 200) {
+    gapScore = 15;
+  } else if (gap >= 3) {
+    gapScore = 10;
+  }
+  
+  const meaningfulDivisors = divisors.filter(d => d >= 3 && d <= 20);
+  let divisorScore = 0;
+  if (meaningfulDivisors.length >= 3) {
+    divisorScore = 15;
+  } else if (meaningfulDivisors.length >= 2) {
+    divisorScore = 10;
+  } else if (meaningfulDivisors.length >= 1) {
+    divisorScore = 5;
+  }
+  
+  const level = confidence >= 80 ? '高' : confidence >= 60 ? '中' : confidence >= 40 ? '低' : '極低';
+  
+  return `信頼度: ${confidence}% (${level})
+詳細スコア:
+• 文字列長(${len}): ${lengthScore}点
+• 間隔妥当性(${gap}): ${gapScore}点  
+• 公約数有用性: ${divisorScore}点
+• 出現頻度: 15点 (基本値)
+
+${confidence >= 80 ? '最も信頼できるパターン。鍵長推定に最適' : 
+  confidence >= 60 ? 'かなり信頼できるパターン。参考として有用' :
+  confidence >= 40 ? 'やや信頼性に欠けるパターン。慎重に判断' :
+  '偶然の可能性が高いパターン。注意が必要'}`;
 }
 
 function renderHighlights(text, matches) {
@@ -331,7 +569,8 @@ function renderTableWithPagination() {
 
     // 信頼度に基づく表示形式
     const confidenceClass = getConfidenceClass(confidence);
-    const confidenceDisplay = `<span class="confidence-score ${confidenceClass}">${confidence}%</span>`;
+    const confidenceTooltip = getConfidenceTooltip(confidence, match);
+    const confidenceDisplay = `<span class="confidence-score ${confidenceClass}" title="${confidenceTooltip}">${confidence}%</span>`;
 
     row.innerHTML = `
       <td>
@@ -449,6 +688,7 @@ function generateLengthFilters() {
   sortedLengths.forEach(len => {
     const label = document.createElement("label");
     label.className = "length-filter-label";
+    label.title = `${len}文字の反復パターンの表示/非表示を切り替え`;
     
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
@@ -635,7 +875,7 @@ function showKeylengthWarning(hints) {
   let warningMessages = [];
   
   if (hasShortKeys) {
-    warningMessages.push("鍵長3以下は古典暗号では可能性が低いとされています");
+    warningMessages.push("鍵長3以下は多表式暗号の鍵長の可能性が低いと考えられます");
   }
   
   if (hasLongKeys) {
@@ -765,6 +1005,61 @@ document.getElementById("highlight-none-btn").addEventListener("click", () => {
   const cleanedText = document.getElementById("ciphertext").value.toUpperCase().replace(/[^A-Z]/g, '');
   renderHighlights(cleanedText, allMatches);
 });
+
+// 暗号種別判定結果を表示
+function displayCipherTypeAnalysis(result) {
+  const analysisSection = document.getElementById("cipher-type-analysis");
+  const resultDiv = document.getElementById("cipher-type-result");
+  
+  // 信頼度に基づくスタイル
+  let confidenceClass = "";
+  let icon = "";
+  if (result.confidence === "high") {
+    confidenceClass = "confidence-high";
+    icon = "✅";
+  } else if (result.confidence === "medium") {
+    confidenceClass = "confidence-medium"; 
+    icon = "⚠️";
+  } else {
+    confidenceClass = "confidence-low";
+    icon = "❓";
+  }
+  
+  // 頻度分析リンクの生成
+  let frequencyLink = "";
+  if (result.frequencyAnalysisLink) {
+    frequencyLink = `
+      <div class="analysis-recommendation">
+        <strong>🔗 推奨ツール:</strong><br>
+        • <a href="https://ipusiron.github.io/frequency-analyzer/" target="_blank" rel="noopener">Frequency Analyzer</a> - 文字頻度分析による単一換字式暗号の解読支援<br>
+        • <a href="https://github.com/ipusiron/caesar-cipher-breaker" target="_blank" rel="noopener">Caesar Cipher Breaker</a> - シーザー暗号の総当たり解読ツール
+      </div>`;
+  }
+  
+  // 結果表示
+  resultDiv.innerHTML = `
+    <div class="cipher-type-result ${confidenceClass}">
+      <div class="cipher-type-header">
+        ${icon} <strong>暗号種別判定結果</strong>
+      </div>
+      <div class="cipher-type-message">
+        ${result.message}
+      </div>
+      <div class="cipher-type-recommendation">
+        <strong>📋 推奨解読手法:</strong><br>
+        ${result.recommendation}
+      </div>
+      ${frequencyLink}
+      <div class="educational-note">
+        <strong>📚 教育的注記:</strong><br>
+        判定結果に関わらず、学習目的でカシスキー検査法を試すことも有効です。<br>
+        異なる暗号種別での反復パターンの違いを観察できます。
+      </div>
+    </div>
+  `;
+  
+  analysisSection.style.display = "block";
+}
 
 // ページ読み込み時にダークモードを初期化
 document.addEventListener('DOMContentLoaded', () => {

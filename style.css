@@ -674,7 +674,7 @@ th.sortable:hover {
 
 .stat-card h4 {
   margin: 0 0 0.8rem 0;
-  color: var(--header-bg);
+  color: var(--button-bg);
   font-size: 1rem;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 0.3rem;
@@ -755,6 +755,204 @@ th.sortable:hover {
   .header-title {
     text-align: center;
   }
+}
+
+/* 拡張ツールチップ */
+.tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.tooltip::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  background-color: var(--text-color);
+  color: var(--section-bg);
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  white-space: pre-line;
+  max-width: 250px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  border: 5px solid transparent;
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+/* 上方向ツールチップ（デフォルト） */
+.tooltip::before {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+}
+
+.tooltip::after {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top-color: var(--text-color);
+  margin-bottom: 3px;
+}
+
+/* ホバー時表示 */
+.tooltip:hover::before,
+.tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 右方向ツールチップ */
+.tooltip-right::before {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  bottom: auto;
+}
+
+.tooltip-right::after {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: var(--text-color);
+  border-top-color: transparent;
+  margin-left: 3px;
+  bottom: auto;
+}
+
+/* 長いツールチップ用 */
+.tooltip-wide::before {
+  max-width: 300px;
+  width: max-content;
+}
+
+/* ダークモード対応 */
+[data-theme="dark"] .tooltip::before {
+  background-color: var(--section-bg);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .tooltip::after {
+  border-top-color: var(--section-bg);
+}
+
+[data-theme="dark"] .tooltip-right::after {
+  border-right-color: var(--section-bg);
+  border-top-color: transparent;
+}
+
+/* 暗号種別判定結果 */
+#cipher-type-analysis.output-box {
+  padding: 0.3rem !important;
+  margin-top: 0.5rem !important;
+}
+
+.cipher-type-result {
+  padding: 1rem;
+  border-radius: 5px;
+  border: 2px solid;
+  margin: 0 !important;
+}
+
+.cipher-type-header {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.cipher-type-message {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.cipher-type-recommendation {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.educational-note {
+  background-color: var(--filter-bg);
+  padding: 0.75rem;
+  border-radius: 5px;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.analysis-recommendation {
+  background-color: var(--filter-bg);
+  padding: 0.75rem;
+  border-radius: 5px;
+  margin: 0.5rem 0;
+  border: 1px solid var(--border-color);
+  line-height: 1.4;
+}
+
+.analysis-recommendation a {
+  color: var(--button-bg);
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+.analysis-recommendation a:hover {
+  text-decoration: underline;
+  color: var(--button-hover);
+}
+
+/* 暗号種別判定結果内のbrタグのスタイリング */
+.cipher-type-result br {
+  margin: 0;
+  padding: 0;
+  line-height: 0.5;
+}
+
+/* 暗号種別判定の信頼度スタイリング */
+.cipher-type-result.confidence-high {
+  background-color: var(--section-bg);
+  border-color: #28a745;
+}
+
+[data-theme="dark"] .cipher-type-result.confidence-high {
+  border-color: #20c997;
+}
+
+.cipher-type-result.confidence-medium {
+  background-color: var(--section-bg);
+  border-color: #ffc107;
+}
+
+[data-theme="dark"] .cipher-type-result.confidence-medium {
+  border-color: #ffcd39;
+}
+
+.cipher-type-result.confidence-low {
+  background-color: var(--section-bg);
+  border-color: #dc3545;
+}
+
+[data-theme="dark"] .cipher-type-result.confidence-low {
+  border-color: #fd7e14;
 }
 
 /* フッター */

@@ -14,10 +14,10 @@
         <p>暗号文の中にある反復文字列（3文字以上）を検出・可視化し、鍵長推定に活用します。</p>
       </div>
       <div class="header-buttons">
-        <button id="help-button" class="header-btn" title="ヘルプ">
+        <button id="help-button" class="header-btn" title="詳細なヘルプとカシスキー検査法の解説を表示">
           <span class="help-icon">❓</span>
         </button>
-        <button id="dark-mode-toggle" class="header-btn dark-mode-toggle" title="ダークモード切り替え">
+        <button id="dark-mode-toggle" class="header-btn dark-mode-toggle" title="ダークテーマとライトテーマを切り替え（設定は自動保存）">
           <span class="dark-mode-icon">🌙</span>
         </button>
       </div>
@@ -27,17 +27,24 @@
   <main>
     <section>
       <h2>🔤 暗号文の入力</h2>
-      <div id="drop-zone" class="drop-zone">
+      <div id="drop-zone" class="drop-zone" title="テキストファイルをここにドロップするか、クリックしてファイルを選択してください">
         <p>📁 テキストファイルをここにドラッグ&ドロップ</p>
         <p class="drop-zone-or">または</p>
         <p class="drop-zone-click">クリックしてファイルを選択</p>
         <input type="file" id="file-input" accept=".txt,text/plain" style="display: none;">
       </div>
-      <textarea id="ciphertext" rows="10" placeholder="ここに暗号文を貼り付けてください（英字）"></textarea>
+      <textarea id="ciphertext" rows="10" placeholder="ここに暗号文を貼り付けてください（英字）" title="暗号文を入力してください。大文字・小文字は自動で統一されます"></textarea>
       <div>
-        <label><input type="checkbox" id="ignore-spaces" checked> 空白・記号を除去して処理</label>
+        <label title="英字以外の文字（数字、記号、空白）を自動除去します（推奨）"><input type="checkbox" id="ignore-spaces" checked> 空白・記号を除去して処理</label>
       </div>
-      <button id="analyze-btn">🔍 解析する</button>
+      <button id="analyze-btn" title="暗号文から3-25文字の反復文字列を検出してハイライト表示し、カシスキー検査法により鍵長候補を推定します">🔍 解析する</button>
+    </section>
+
+    <section>
+      <h2>🔍 暗号種別の事前判定</h2>
+      <div id="cipher-type-analysis" class="output-box" style="display: none;">
+        <div id="cipher-type-result"></div>
+      </div>
     </section>
 
     <section>
@@ -48,37 +55,37 @@
     <section>
       <h2>📋 検出された反復文字列</h2>
       <div id="filter-controls" class="filter-controls">
-        <label class="filter-label">フィルター：</label>
+        <label class="filter-label" title="文字列の長さでフィルタリングできます。複数選択可能">フィルター：</label>
         <div id="length-filters" class="length-filters">
           <!-- フィルターチェックボックスがここに動的に生成される -->
         </div>
-        <button id="select-all-btn" class="filter-btn">全選択</button>
-        <button id="clear-all-btn" class="filter-btn">全解除</button>
+        <button id="select-all-btn" class="filter-btn" title="すべての文字列長を選択して表示">全選択</button>
+        <button id="clear-all-btn" class="filter-btn" title="すべての選択を解除（結果非表示）">全解除</button>
       </div>
       <div id="pagination-controls" style="display: none;">
-        <button id="prev-page" disabled>◀ 前へ</button>
-        <span id="page-info"></span>
-        <button id="next-page">次へ ▶</button>
+        <button id="prev-page" disabled title="前のページを表示（20件ずつ表示）">◀ 前へ</button>
+        <span id="page-info" title="現在のページ位置と総件数"></span>
+        <button id="next-page" title="次のページを表示（20件ずつ表示）">次へ ▶</button>
       </div>
       <table id="result-table">
         <thead>
           <tr>
-            <th>
+            <th title="この項目のハイライト表示をON/OFFできます">
               <div class="highlight-control-header">
                 ハイライト
                 <div class="highlight-control-buttons">
-                  <button id="highlight-all-btn" class="highlight-control-btn" title="全選択">全</button>
-                  <button id="highlight-none-btn" class="highlight-control-btn" title="全解除">無</button>
+                  <button id="highlight-all-btn" class="highlight-control-btn" title="すべての項目のハイライトを有効化">全</button>
+                  <button id="highlight-none-btn" class="highlight-control-btn" title="すべての項目のハイライトを無効化">無</button>
                 </div>
               </div>
             </th>
-            <th class="sortable" data-column="seq">文字列 <span class="sort-indicator"></span></th>
-            <th class="sortable" data-column="len">長さ <span class="sort-indicator">▼</span></th>
-            <th class="sortable" data-column="confidence">信頼度 <span class="sort-indicator"></span></th>
-            <th class="sortable" data-column="first">1回目位置 <span class="sort-indicator"></span></th>
-            <th class="sortable" data-column="second">2回目位置 <span class="sort-indicator"></span></th>
-            <th class="sortable" data-column="gap">間隔 <span class="sort-indicator"></span></th>
-            <th>公約数（1除外）</th>
+            <th class="sortable" data-column="seq" title="検出された反復パターン。クリックで並び替え">文字列 <span class="sort-indicator"></span></th>
+            <th class="sortable" data-column="len" title="文字列の文字数。長いほど信頼性が高い">長さ <span class="sort-indicator">▼</span></th>
+            <th class="sortable" data-column="confidence" title="このパターンの信頼性（0-100%）。計算根拠：文字列長、出現頻度、間隔妥当性、公約数有用性">信頼度 <span class="sort-indicator"></span></th>
+            <th class="sortable" data-column="first" title="暗号文内での最初の出現位置（0から開始）">1回目位置 <span class="sort-indicator"></span></th>
+            <th class="sortable" data-column="second" title="暗号文内での2回目の出現位置">2回目位置 <span class="sort-indicator"></span></th>
+            <th class="sortable" data-column="gap" title="1回目と2回目の間隔。この値の公約数が鍵長候補になります">間隔 <span class="sort-indicator"></span></th>
+            <th title="間隔の約数（1を除く）。これらが鍵長の候補です">公約数（1除外）</th>
           </tr>
         </thead>
         <tbody>
@@ -97,12 +104,12 @@
     <section>
       <h2>🧠 鍵長の候補（推定）</h2>
       <div class="keylength-controls">
-        <label class="toggle-label">
+        <label class="toggle-label" title="鍵長3以下の候補を一覧から除外（古典暗号では現実的でないため）">
           <input type="checkbox" id="hide-short-keys" class="toggle-checkbox">
           <span class="toggle-slider"></span>
           鍵長3以下を非表示
         </label>
-        <label class="toggle-label">
+        <label class="toggle-label" title="鍵長20以上の候補を一覧から除外（手動暗号では非現実的なため）">
           <input type="checkbox" id="hide-long-keys" class="toggle-checkbox">
           <span class="toggle-slider"></span>
           鍵長20以上を非表示
@@ -129,7 +136,7 @@
       <div class="modal-body">
         <div class="help-section">
           <h3>📝 概要</h3>
-          <p>RepeatSeq Analyzerは、暗号文の中にある反復文字列を検出・可視化し、古典暗号（特にヴィジュネル暗号など）の鍵長推定に活用できるツールです。カシスキー検査法を用いて暗号解析を支援します。</p>
+          <p>RepeatSeq Analyzerは、暗号文の中にある反復文字列（3-25文字）を検出・可視化し、古典暗号（特にヴィジュネル暗号など）の鍵長推定に活用できるツールです。一致指数（IC）による事前判定とカシスキー検査法を用いて暗号解析を支援します。</p>
         </div>
 
         <div class="help-section">
@@ -150,6 +157,7 @@
             <li><strong>解析実行</strong>
               <ul>
                 <li>「🔍 解析する」ボタンをクリック</li>
+                <li>自動的に暗号種別の事前判定が実行されます</li>
               </ul>
             </li>
           </ol>
@@ -158,73 +166,135 @@
         <div class="help-section">
           <h3>📊 結果の見方</h3>
           
+          <h4>🔍 暗号種別の事前判定</h4>
+          <ul>
+            <li><strong>一致指数（IC）による自動判定</strong>: 単一換字式 vs 多表式暗号を自動判別</li>
+            <li><strong>単一換字式判定時</strong>: 頻度分析ツールへの誘導表示</li>
+            <li><strong>多表式判定時</strong>: カシスキー検査法の推奨</li>
+            <li><strong>信頼度表示</strong>: 高（緑）・中（黄）・低（赤）で判定精度を表示</li>
+          </ul>
+
           <h4>🖍 ハイライト結果</h4>
           <ul>
             <li><span class="help-highlight">黄色</span>: 3-4文字の反復パターン</li>
             <li><span class="help-highlight-medium">緑色</span>: 5-7文字の反復パターン（中程度の重要度）</li>
             <li><span class="help-highlight-important">赤色</span>: 8文字以上の反復パターン（重要度高）</li>
+            <li><strong>ハイライト制御</strong>: 各項目のチェックボックスで個別ON/OFF可能</li>
           </ul>
 
           <h4>📋 検出された反復文字列</h4>
           <ul>
-            <li><strong>文字列</strong>: 反復している文字列</li>
-            <li><strong>長さ</strong>: 文字列の長さ</li>
+            <li><strong>ハイライト</strong>: 個別のハイライト表示制御</li>
+            <li><strong>文字列</strong>: 反復している文字列（3-25文字）</li>
+            <li><strong>長さ</strong>: 文字列の長さ（ソート可能）</li>
+            <li><strong>信頼度</strong>: 統計的信頼度スコア（0-100%、詳細はツールチップ表示）</li>
             <li><strong>1回目位置・2回目位置</strong>: 文字列が出現した位置</li>
             <li><strong>間隔</strong>: 1回目と2回目の間隔</li>
             <li><strong>公約数（1除外）</strong>: 間隔の公約数（鍵長候補）</li>
           </ul>
 
+          <h4>📊 統計情報</h4>
+          <ul>
+            <li><strong>基本統計</strong>: 検出パターン数、ユニーク文字列、平均信頼度</li>
+            <li><strong>信頼度分布</strong>: 高・中・低・極低信頼度の分布グラフ</li>
+            <li><strong>長さ分布</strong>: パターン長別の分類</li>
+            <li><strong>最高信頼度</strong>: 最も信頼性の高いパターンの詳細</li>
+          </ul>
+
           <h4>🧠 鍵長の候補（推定）</h4>
-          <p>公約数の出現頻度に基づいて推定される鍵長候補。頻度が高いほど正しい鍵長の可能性が高い。</p>
+          <p>公約数の出現頻度に基づいて推定される鍵長候補。頻度が高いほど正しい鍵長の可能性が高い。鍵長3以下・20以上の非表示機能付き。</p>
         </div>
 
         <div class="help-section">
           <h3>⚙️ 機能</h3>
           
+          <h4>🔍 事前判定機能</h4>
+          <ul>
+            <li><strong>一致指数（IC）計算</strong>: 暗号文の統計的特性を自動分析</li>
+            <li><strong>暗号種別判定</strong>: 単一換字式・多表式・判定困難の3分類</li>
+            <li><strong>推奨ツール誘導</strong>: 判定結果に応じた最適な解読手法の提案</li>
+            <li><strong>教育的配慮</strong>: 判定結果に関わらず学習目的での使用を許可</li>
+          </ul>
+
           <h4>🔄 ソート機能</h4>
-          <p>列ヘッダーをクリックすると、その列でソートできます。同じ列を再度クリックすると昇順/降順が切り替わります。</p>
+          <p>列ヘッダーをクリックすると、その列でソートできます。同じ列を再度クリックすると昇順/降順が切り替わります。デフォルトは長さの降順表示。</p>
 
           <h4>📄 ページネーション</h4>
-          <p>検出結果が20件を超える場合、自動的にページネーション機能が有効になります。</p>
+          <p>検出結果が20件を超える場合、自動的にページネーション機能が有効になります。前後ナビゲーションとページ情報を表示。</p>
 
           <h4>🔍 フィルター機能</h4>
           <ul>
-            <li><strong>文字列長フィルター</strong>: 特定の長さの反復文字列のみ表示</li>
-            <li><strong>鍵長候補フィルター</strong>: 現実的でない鍵長（3以下、20以上）を非表示</li>
+            <li><strong>文字列長フィルター</strong>: 特定の長さの反復文字列のみ表示（複数選択可能）</li>
+            <li><strong>鍵長候補フィルター</strong>: 多表式暗号で現実的でない鍵長（3以下、20以上）を非表示するトグル</li>
+            <li><strong>全選択・全解除</strong>: フィルター項目の一括操作</li>
+          </ul>
+
+          <h4>🖍 ハイライト制御</h4>
+          <ul>
+            <li><strong>個別制御</strong>: 各検出結果のハイライト表示を個別にON/OFF</li>
+            <li><strong>優先度システム</strong>: 重複箇所では高重要度色（赤→緑→黄）を優先表示</li>
+            <li><strong>全体制御</strong>: 全選択・全解除ボタンで一括操作</li>
           </ul>
 
           <h4>🌙 ダークモード</h4>
-          <p>目の疲れを軽減するダークテーマに切り替えられます。設定は自動保存されます。</p>
+          <p>目の疲れを軽減するダークテーマに切り替えられます。設定は自動保存され、次回起動時に復元されます。</p>
         </div>
 
         <div class="help-section">
-          <h3>🔬 カシスキー検査法について</h3>
-          <p>カシスキー検査法は、ヴィジュネル暗号などの多表式換字暗号の鍵長を推定する手法です。同じ平文が同じ鍵文字で暗号化されると同じ暗号文になることを利用し、反復パターンの間隔から鍵長を推定します。</p>
+          <h3>🔬 暗号解読の理論背景</h3>
+          
+          <h4>一致指数（Index of Coincidence）</h4>
+          <p>文字の出現頻度の偏りを測定する統計値。英語では約0.065、ランダムテキストでは約0.038。この値により暗号種別を判定します。</p>
+          <ul>
+            <li><strong>IC > 0.060</strong>: 単一換字式暗号（シーザー暗号など）の可能性が高い</li>
+            <li><strong>IC < 0.045</strong>: 多表式暗号（ヴィジュネル暗号など）の可能性が高い</li>
+            <li><strong>0.045 ≤ IC ≤ 0.060</strong>: 判定困難、両方の可能性あり</li>
+          </ul>
+
+          <h4>カシスキー検査法</h4>
+          <p>ヴィジュネル暗号などの多表式換字暗号の鍵長を推定する手法です。同じ平文が同じ鍵文字で暗号化されると同じ暗号文になることを利用し、反復パターンの間隔から鍵長を推定します。</p>
+          
+          <h4>信頼度スコア</h4>
+          <p>本ツールでは複数の要素を総合して信頼度を計算します：</p>
+          <ul>
+            <li><strong>文字列長</strong>: 長いパターンほど偶然の一致確率が低い</li>
+            <li><strong>出現頻度</strong>: 複数回出現するパターンは信頼性が高い</li>
+            <li><strong>間隔妥当性</strong>: 適切な間隔（10-100文字程度）を評価</li>
+            <li><strong>公約数有用性</strong>: 現実的な鍵長候補（3-20文字）の存在</li>
+          </ul>
           
           <h4>分析のコツ</h4>
           <ul>
             <li>長い反復パターン（8文字以上）はより信頼性が高い</li>
             <li>複数の反復パターンで共通する公約数を探す</li>
-            <li>鍵長3以下や20以上は古典暗号では非現実的</li>
-            <li>最も頻度の高い公約数が鍵長の可能性が高い</li>
+            <li>鍵長3以下は多表式暗号では現実的でない</li>
+            <li>鍵長20以上は手動暗号では非現実的</li>
+            <li>信頼度スコアの高いパターンを優先的に分析</li>
+            <li>統計情報で全体的な傾向を把握</li>
           </ul>
         </div>
 
         <div class="help-section">
-          <h3>💡 ヒント</h3>
+          <h3>💡 使用上のヒント</h3>
           <ul>
-            <li>解析前に空白・記号の除去を有効にすることを推奨</li>
-            <li>暗号文が短すぎると有効な反復パターンが検出されない場合があります</li>
-            <li>鍵長候補は複数の証拠を総合して判断してください</li>
-            <li>このツールは鍵長推定のみを行います。実際の復号は別のツールが必要です</li>
+            <li><strong>前処理</strong>: 解析前に「空白・記号を除去」を有効にすることを推奨</li>
+            <li><strong>暗号文の長さ</strong>: 短すぎる暗号文（100文字未満）では正確な判定が困難</li>
+            <li><strong>事前判定の活用</strong>: IC値による暗号種別判定を参考に適切な解読手法を選択</li>
+            <li><strong>信頼度の重視</strong>: 高信頼度（80%以上）のパターンを優先的に分析</li>
+            <li><strong>統計情報の確認</strong>: 全体的な傾向把握に統計ダッシュボードを活用</li>
+            <li><strong>フィルタリング</strong>: 大量の結果は長さフィルターで絞り込み</li>
+            <li><strong>総合判断</strong>: 複数の証拠を総合して鍵長候補を判断</li>
+            <li><strong>ツールの役割</strong>: 本ツールは鍵長推定のみ。実際の復号は関連ツールを使用</li>
           </ul>
         </div>
 
         <div class="help-section">
           <h3>🔗 関連ツール</h3>
           <ul>
-            <li><a href="https://ipusiron.github.io/vigenere-cipher-tool/" target="_blank">Vigenère Cipher Tool</a> - ヴィジュネル暗号の暗号化・復号</li>
-            <li><a href="https://github.com/ipusiron/caesar-cipher-wheel" target="_blank">Caesar Cipher Wheel Tool</a> - シーザー暗号の解析</li>
+            <li><a href="https://github.com/ipusiron/caesar-cipher-wheel" target="_blank">Caesar Cipher Wheel Tool</a> - シーザー暗号の可視化</li>
+            <li><a href="https://github.com/ipusiron/caesar-cipher-breaker" target="_blank">Caesar Cipher Breaker</a> - シーザー暗号の総当たり解読</li>
+            <li><a href="https://github.com/ipusiron/frequency-analyzer" target="_blank">Frequency Analyzer</a> - 単一換字式暗号の頻度分析</li>
+            <li><a href="https://github.com/ipusiron/vigenere-cipher-tool" target="_blank">Vigenère Cipher Tool</a> - ヴィジュネル暗号の暗号化・復号</li>
           </ul>
         </div>
       </div>
