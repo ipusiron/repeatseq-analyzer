@@ -108,6 +108,43 @@ th {
   font-weight: bold;
 }
 
+/* ページネーション */
+#pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #f5f5f5;
+  border-radius: 5px;
+}
+
+#pagination-controls button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#pagination-controls button:hover:not(:disabled) {
+  background-color: #357ac9;
+}
+
+#pagination-controls button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+#page-info {
+  font-weight: bold;
+  color: #333;
+}
+
 /* フッター */
 footer {
   border-top: 1px solid #ccc;

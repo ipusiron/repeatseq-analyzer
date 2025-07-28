@@ -1,3 +1,8 @@
+// ページネーション設定
+const ITEMS_PER_PAGE = 20;
+let currentPage = 1;
+let allMatches = [];
+
 document.getElementById("analyze-btn").addEventListener("click", () => {
   const rawText = document.getElementById("ciphertext").value;
   const ignoreSymbols = document.getElementById("ignore-spaces").checked;
@@ -39,9 +44,29 @@ document.getElementById("analyze-btn").addEventListener("click", () => {
     }
   }
 
+  // グローバル変数に保存
+  allMatches = matches;
+  currentPage = 1;
+
   renderHighlights(cleanedText, matches);
-  renderTable(matches);
+  renderTableWithPagination();
   renderKeylengthHints(matches);
+});
+
+// ページネーションイベントリスナー
+document.getElementById("prev-page").addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTableWithPagination();
+  }
+});
+
+document.getElementById("next-page").addEventListener("click", () => {
+  const totalPages = Math.ceil(allMatches.length / ITEMS_PER_PAGE);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderTableWithPagination();
+  }
 });
 
 // 公約数（1以外）を取得
@@ -67,11 +92,18 @@ function renderHighlights(text, matches) {
   document.getElementById("highlighted-text").innerHTML = output.join('');
 }
 
-function renderTable(matches) {
+function renderTableWithPagination() {
   const tbody = document.querySelector("#result-table tbody");
   tbody.innerHTML = "";
 
-  matches.forEach(({ seq, len, first, second, gap, divisors }) => {
+  // ページネーション計算
+  const totalPages = Math.ceil(allMatches.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allMatches.length);
+  const pageMatches = allMatches.slice(startIndex, endIndex);
+
+  // テーブル行を描画
+  pageMatches.forEach(({ seq, len, first, second, gap, divisors }) => {
     const row = document.createElement("tr");
 
     row.innerHTML = `
@@ -84,6 +116,22 @@ function renderTable(matches) {
     `;
     tbody.appendChild(row);
   });
+
+  // ページネーションコントロールの更新
+  const paginationControls = document.getElementById("pagination-controls");
+  const pageInfo = document.getElementById("page-info");
+  const prevBtn = document.getElementById("prev-page");
+  const nextBtn = document.getElementById("next-page");
+
+  if (allMatches.length > ITEMS_PER_PAGE) {
+    paginationControls.style.display = "block";
+    pageInfo.textContent = `${currentPage} / ${totalPages} ページ (全 ${allMatches.length} 件)`;
+    
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+  } else {
+    paginationControls.style.display = "none";
+  }
 }
 
 function renderKeylengthHints(matches) {
