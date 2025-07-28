@@ -108,6 +108,44 @@ th {
   font-weight: bold;
 }
 
+/* ドラッグアンドドロップゾーン */
+.drop-zone {
+  border: 2px dashed #4a90e2;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  background-color: #f8f9fa;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.drop-zone p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.drop-zone-or {
+  font-size: 0.9rem;
+  color: #999;
+}
+
+.drop-zone-click {
+  color: #4a90e2;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.drop-zone.drag-over {
+  border-color: #357ac9;
+  background-color: #e3f2fd;
+  transform: scale(1.02);
+}
+
+.drop-zone.drag-over p {
+  color: #357ac9;
+}
+
 /* ページネーション */
 #pagination-controls {
   display: flex;

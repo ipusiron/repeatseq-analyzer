@@ -15,6 +15,12 @@
   <main>
     <section>
       <h2>🔤 暗号文の入力</h2>
+      <div id="drop-zone" class="drop-zone">
+        <p>📁 テキストファイルをここにドラッグ&ドロップ</p>
+        <p class="drop-zone-or">または</p>
+        <p class="drop-zone-click">クリックしてファイルを選択</p>
+        <input type="file" id="file-input" accept=".txt,text/plain" style="display: none;">
+      </div>
       <textarea id="ciphertext" rows="10" placeholder="ここに暗号文を貼り付けてください（英大文字のみ）"></textarea>
       <div>
         <label><input type="checkbox" id="ignore-spaces" checked> 空白・記号を除去して処理</label>

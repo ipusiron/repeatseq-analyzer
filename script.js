@@ -3,6 +3,70 @@ const ITEMS_PER_PAGE = 20;
 let currentPage = 1;
 let allMatches = [];
 
+// ドラッグアンドドロップ機能
+const dropZone = document.getElementById("drop-zone");
+const cipherTextArea = document.getElementById("ciphertext");
+const fileInput = document.getElementById("file-input");
+
+// ファイル読み込み処理を共通化
+function readFile(file) {
+  // テキストファイルかチェック
+  if (file.type.startsWith("text/") || file.name.endsWith(".txt")) {
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      cipherTextArea.value = event.target.result;
+      // 自動的に解析を開始
+      document.getElementById("analyze-btn").click();
+    };
+    
+    reader.onerror = () => {
+      alert("ファイルの読み込みに失敗しました。");
+    };
+    
+    reader.readAsText(file);
+  } else {
+    alert("テキストファイル（.txt）を選択してください。");
+  }
+}
+
+// クリックイベント
+dropZone.addEventListener("click", () => {
+  fileInput.click();
+});
+
+// ファイル選択時のイベント
+fileInput.addEventListener("change", (e) => {
+  const files = e.target.files;
+  if (files.length > 0) {
+    readFile(files[0]);
+  }
+});
+
+// ドラッグオーバー時のイベント
+dropZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.classList.add("drag-over");
+});
+
+// ドラッグが離れた時のイベント
+dropZone.addEventListener("dragleave", (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("drag-over");
+});
+
+// ドロップ時のイベント
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("drag-over");
+  
+  const files = e.dataTransfer.files;
+  
+  if (files.length > 0) {
+    readFile(files[0]);
+  }
+});
+
 document.getElementById("analyze-btn").addEventListener("click", () => {
   const rawText = document.getElementById("ciphertext").value;
   const ignoreSymbols = document.getElementById("ignore-spaces").checked;
