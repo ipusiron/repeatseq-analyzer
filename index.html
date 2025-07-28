@@ -13,9 +13,14 @@
         <h1>🔁 RepeatSeq Analyzer</h1>
         <p>暗号文の中にある反復文字列（3文字以上）を検出・可視化し、鍵長推定に活用します。</p>
       </div>
-      <button id="dark-mode-toggle" class="dark-mode-toggle" title="ダークモード切り替え">
-        <span class="dark-mode-icon">🌙</span>
-      </button>
+      <div class="header-buttons">
+        <button id="help-button" class="header-btn" title="ヘルプ">
+          <span class="help-icon">❓</span>
+        </button>
+        <button id="dark-mode-toggle" class="header-btn dark-mode-toggle" title="ダークモード切り替え">
+          <span class="dark-mode-icon">🌙</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -58,8 +63,18 @@
       <table id="result-table">
         <thead>
           <tr>
+            <th>
+              <div class="highlight-control-header">
+                ハイライト
+                <div class="highlight-control-buttons">
+                  <button id="highlight-all-btn" class="highlight-control-btn" title="全選択">全</button>
+                  <button id="highlight-none-btn" class="highlight-control-btn" title="全解除">無</button>
+                </div>
+              </div>
+            </th>
             <th class="sortable" data-column="seq">文字列 <span class="sort-indicator"></span></th>
             <th class="sortable" data-column="len">長さ <span class="sort-indicator">▼</span></th>
+            <th class="sortable" data-column="confidence">信頼度 <span class="sort-indicator"></span></th>
             <th class="sortable" data-column="first">1回目位置 <span class="sort-indicator"></span></th>
             <th class="sortable" data-column="second">2回目位置 <span class="sort-indicator"></span></th>
             <th class="sortable" data-column="gap">間隔 <span class="sort-indicator"></span></th>
@@ -70,6 +85,13 @@
           <!-- 検出結果がここに表示される -->
         </tbody>
       </table>
+    </section>
+
+    <section>
+      <h2>📊 統計情報</h2>
+      <div id="statistics-summary" class="statistics-container">
+        <!-- 統計情報がここに表示される -->
+      </div>
     </section>
 
     <section>
@@ -96,6 +118,118 @@
       🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/repeatseq-analyzer" target="_blank">ipusiron/repeatseq-analyzer</a> ）
     </div>
   </footer>
+
+  <!-- ヘルプモーダル -->
+  <div id="help-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🔁 RepeatSeq Analyzer ヘルプ</h2>
+        <button class="modal-close" id="help-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="help-section">
+          <h3>📝 概要</h3>
+          <p>RepeatSeq Analyzerは、暗号文の中にある反復文字列を検出・可視化し、古典暗号（特にヴィジュネル暗号など）の鍵長推定に活用できるツールです。カシスキー検査法を用いて暗号解析を支援します。</p>
+        </div>
+
+        <div class="help-section">
+          <h3>🚀 使用方法</h3>
+          <ol>
+            <li><strong>暗号文の入力</strong>
+              <ul>
+                <li>テキストエリアに暗号文を直接入力・貼り付け</li>
+                <li>テキストファイルをドラッグ&ドロップ</li>
+                <li>エリアをクリックしてファイル選択ダイアログから選択</li>
+              </ul>
+            </li>
+            <li><strong>解析オプション</strong>
+              <ul>
+                <li>「空白・記号を除去して処理」: 英字以外の文字を除去（推奨）</li>
+              </ul>
+            </li>
+            <li><strong>解析実行</strong>
+              <ul>
+                <li>「🔍 解析する」ボタンをクリック</li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+
+        <div class="help-section">
+          <h3>📊 結果の見方</h3>
+          
+          <h4>🖍 ハイライト結果</h4>
+          <ul>
+            <li><span class="help-highlight">黄色</span>: 3-4文字の反復パターン</li>
+            <li><span class="help-highlight-medium">緑色</span>: 5-7文字の反復パターン（中程度の重要度）</li>
+            <li><span class="help-highlight-important">赤色</span>: 8文字以上の反復パターン（重要度高）</li>
+          </ul>
+
+          <h4>📋 検出された反復文字列</h4>
+          <ul>
+            <li><strong>文字列</strong>: 反復している文字列</li>
+            <li><strong>長さ</strong>: 文字列の長さ</li>
+            <li><strong>1回目位置・2回目位置</strong>: 文字列が出現した位置</li>
+            <li><strong>間隔</strong>: 1回目と2回目の間隔</li>
+            <li><strong>公約数（1除外）</strong>: 間隔の公約数（鍵長候補）</li>
+          </ul>
+
+          <h4>🧠 鍵長の候補（推定）</h4>
+          <p>公約数の出現頻度に基づいて推定される鍵長候補。頻度が高いほど正しい鍵長の可能性が高い。</p>
+        </div>
+
+        <div class="help-section">
+          <h3>⚙️ 機能</h3>
+          
+          <h4>🔄 ソート機能</h4>
+          <p>列ヘッダーをクリックすると、その列でソートできます。同じ列を再度クリックすると昇順/降順が切り替わります。</p>
+
+          <h4>📄 ページネーション</h4>
+          <p>検出結果が20件を超える場合、自動的にページネーション機能が有効になります。</p>
+
+          <h4>🔍 フィルター機能</h4>
+          <ul>
+            <li><strong>文字列長フィルター</strong>: 特定の長さの反復文字列のみ表示</li>
+            <li><strong>鍵長候補フィルター</strong>: 現実的でない鍵長（3以下、20以上）を非表示</li>
+          </ul>
+
+          <h4>🌙 ダークモード</h4>
+          <p>目の疲れを軽減するダークテーマに切り替えられます。設定は自動保存されます。</p>
+        </div>
+
+        <div class="help-section">
+          <h3>🔬 カシスキー検査法について</h3>
+          <p>カシスキー検査法は、ヴィジュネル暗号などの多表式換字暗号の鍵長を推定する手法です。同じ平文が同じ鍵文字で暗号化されると同じ暗号文になることを利用し、反復パターンの間隔から鍵長を推定します。</p>
+          
+          <h4>分析のコツ</h4>
+          <ul>
+            <li>長い反復パターン（8文字以上）はより信頼性が高い</li>
+            <li>複数の反復パターンで共通する公約数を探す</li>
+            <li>鍵長3以下や20以上は古典暗号では非現実的</li>
+            <li>最も頻度の高い公約数が鍵長の可能性が高い</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>💡 ヒント</h3>
+          <ul>
+            <li>解析前に空白・記号の除去を有効にすることを推奨</li>
+            <li>暗号文が短すぎると有効な反復パターンが検出されない場合があります</li>
+            <li>鍵長候補は複数の証拠を総合して判断してください</li>
+            <li>このツールは鍵長推定のみを行います。実際の復号は別のツールが必要です</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>🔗 関連ツール</h3>
+          <ul>
+            <li><a href="https://ipusiron.github.io/vigenere-cipher-tool/" target="_blank">Vigenère Cipher Tool</a> - ヴィジュネル暗号の暗号化・復号</li>
+            <li><a href="https://github.com/ipusiron/caesar-cipher-wheel" target="_blank">Caesar Cipher Wheel Tool</a> - シーザー暗号の解析</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
