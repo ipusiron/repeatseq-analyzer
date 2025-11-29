@@ -4,78 +4,83 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RepeatSeq Analyzer is a web-based cryptanalysis tool that detects repeated character sequences in cipher text to estimate key lengths using the Kasiski examination method. It's a standalone, client-side application with no build dependencies.
+RepeatSeq Analyzer is a web-based cryptanalysis tool that detects repeated character sequences in cipher text to estimate key lengths using the Kasiski examination method. It's a client-side application with no build dependencies (static HTML/CSS/JS).
 
 ## Commands
 
-### Running and Testing
+### Running Locally
 ```bash
-# Run locally - simply open in browser
-open index.html  # macOS
-xdg-open index.html  # Linux
+# Open in browser
 start index.html  # Windows
+open index.html   # macOS
+xdg-open index.html  # Linux
+```
 
-# No build, lint, or test commands - this is a static site
-# Testing is done manually using the sample cipher texts in the samples/ directory
+### Testing with Playwright
+```bash
+# Install dependencies (first time only)
+npm install
+
+# Run all tests
+npx playwright test
+
+# Run specific test file
+npx playwright test tests/repeatseq.spec.ts
+
+# Run tests in headed mode (visible browser)
+npx playwright test --headed
+
+# Run tests for specific browser
+npx playwright test --project=chromium
 ```
 
 ### Deployment
 ```bash
-# Deploy to GitHub Pages (assuming gh-pages branch exists)
-git checkout gh-pages
-git merge main
-git push origin gh-pages
+git checkout gh-pages && git merge main && git push origin gh-pages
 ```
 
 ## Architecture
 
-### Core Components
+### Core Components (`script.js`)
 
-1. **Pattern Detection Engine** (`script.js`):
-   - `analyzeText()`: Main analysis function that coordinates the detection process
-   - `detectRepeats()`: Implements sliding window algorithm to find repeated sequences (3-10 chars)
-   - `calculateDivisors()`: Computes common factors of intervals to suggest key lengths
-   - Uses hash maps for O(n²) performance with efficient lookups
+1. **Cipher Type Detection**: `detectCipherType()` uses Index of Coincidence (IC) to classify monoalphabetic vs polyalphabetic ciphers before analysis
 
-2. **Visual Feedback System**:
-   - DOM manipulation to highlight detected patterns
-   - Color coding: red for 5+ character sequences, yellow for 3-4 characters
-   - Real-time highlighting in the cipher text display
+2. **Pattern Detection**: Sliding window algorithm finds repeated sequences (3-25 chars), stores positions in hash map for O(n²) lookup
 
-3. **Results Processing**:
-   - Tabular display of sequences with positions, intervals, and divisors
-   - Key length frequency analysis based on common divisors
-   - Sorted by interval length for easier analysis
+3. **Confidence Scoring**: `calculateConfidenceScores()` evaluates patterns based on:
+   - Sequence length (longer = more reliable)
+   - Occurrence frequency
+   - Gap validity (10-100 is optimal)
+   - Divisor usefulness (3-20 range)
 
-### Key Algorithms
+4. **Highlight System**: Priority-based coloring (red: 8+ chars, green: 5-7, yellow: 3-4) with per-pattern toggle control
 
-The Kasiski method implementation:
-1. Find all repeated sequences of length 3-10
-2. Calculate intervals between occurrences
-3. Find divisors of these intervals
-4. Most frequent divisors suggest probable key lengths
+5. **Results Display**: Paginated table (20/page), sortable columns, length-based filtering
 
-### Testing Approach
+### Key Functions
+- `calculateIC()`: Index of Coincidence for cipher classification
+- `getDivisors()`: Common divisors for key length estimation
+- `renderHighlights()`: DOM-based pattern visualization
+- `renderKeylengthHints()`: Frequency-ranked key length candidates
 
-Use the provided sample cipher texts in `samples/`:
-- `caesar/`: Simple substitution cipher examples
-- `vigenere1/`, `vigenere2/`: Polyalphabetic cipher examples with known keys
+## Testing
 
-Each sample directory contains:
-- `ciphertext.txt`: The encrypted text
-- `plaintext.txt`: The original message
-- `key.txt` or `shift.txt`: The encryption key
+### Sample Files (`samples/`)
+| Directory | Type | Key | Purpose |
+|-----------|------|-----|---------|
+| `caesar/` | Caesar cipher | shift=3 | Monoalphabetic test (high IC) |
+| `vigenere1/` | Vigenère | LEMON | Short key, clear patterns |
+| `vigenere2/` | Vigenère | KNOWLEDGEISKEY | Long key, long text |
+| `random/` | Random | - | False positive testing |
+
+### Playwright Tests (`tests/`)
+- `repeatseq.spec.ts`: Main functionality tests
+- `short-text.spec.ts`: Edge case for short input
 
 ## Important Considerations
 
-1. **No Build Process**: This is a static site - avoid adding package.json or build tools unless explicitly requested
-2. **Educational Focus**: Code clarity is prioritized over performance optimization
-3. **Japanese Documentation**: README and UI are in Japanese - maintain consistency
-4. **Browser Compatibility**: Uses modern JavaScript features (ES6+) - no IE support needed
-5. **Future Enhancements**: Code comments mention planned features (multiple occurrence detection, automatic coloring) - consider these when adding new functionality
-
-## Related Tools
-
-This tool is part of a cryptanalysis workflow:
-- Companion tool: Vigenère Cipher Tool (https://ipusiron.github.io/vigenere-cipher-tool/)
-- Full project series: "100 Security Tools with Generative AI"
+1. **Static Site**: No build process - avoid adding build tools unless requested
+2. **Japanese UI**: README and interface are in Japanese - maintain consistency
+3. **Educational Focus**: Code clarity over performance
+4. **Browser Compatibility**: ES6+ features, no IE support
+5. **LocalStorage**: Dark mode preference persists via `theme` key

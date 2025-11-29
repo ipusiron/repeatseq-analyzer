@@ -1,3 +1,39 @@
+<!--
+---
+id: day028
+slug: repeatseq-analyzer
+
+title: "RepeatSeq Analyzer"
+
+subtitle_ja: "反復文字列の特定ツール"
+subtitle_en: "Repeated Sequence Detection Tool"
+
+description_ja: "暗号文中に繰り返し出現する文字列を検出し、カシスキー法による鍵長推定を支援する暗号解析ツール"
+description_en: "Cryptanalysis tool that detects repeated sequences in ciphertext and assists key length estimation using the Kasiski examination method"
+
+category_ja:
+  - 暗号解読
+  - 古典暗号
+category_en:
+  - Cryptanalysis
+  - Classical Cryptography
+
+difficulty: 4
+
+tags:
+  - kasiski
+  - vigenere
+  - cryptanalysis
+  - pattern-detection
+  - key-length
+
+repo_url: "https://github.com/ipusiron/repeatseq-analyzer"
+demo_url: "https://ipusiron.github.io/repeatseq-analyzer/"
+
+hub: true
+---
+-->
+
 # RepeatSeq Analyzer - 反復文字列の特定ツール
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/ipusiron/repeatseq-analyzer?style=social)
