@@ -139,7 +139,7 @@ const messages = {
     "stats.gaps": "隣り合う出現の間隔の数",
     "stats.longest": "最長の反復",
     "stats.sequence": "{seq}（{n}文字）",
-    "chance.explain": "この長さの一致は、偶然でも約X組できる",
+    "chance.explain": "偶然でもできる組の見込み",
     "summary.mono": "単一換字（鍵長1）の可能性",
     "summary.agree": "2つの方法が一致: 鍵長 {k} が有力",
     "summary.disagree": "一致しない: カシスキー {k}、列 IC {L}",
