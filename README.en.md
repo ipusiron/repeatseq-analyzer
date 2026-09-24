@@ -21,15 +21,25 @@ For classical cryptanalysis practice and learning the Kasiski method, it calcula
 ## 📸 Screenshots
 
 ![Both methods suggest key length 14](assets/screenshot.png)
-> *Light Japanese view of vigenere2: the Kasiski ratio is 8.63 and both methods select 14. 1280×1200, 101,131 bytes.*
+> *Light Japanese view of vigenere2: the Kasiski ratio is 8.63 and both methods select 14. 1280×1200, 105,650 bytes.*
 
 ![Highlighted repeats and the results table](assets/screenshot2.png)
-> *Vigenere1 highlights and LRPHUP: length 6, positions 230, 280 and 360. 1280×1000, 112,165 bytes.*
+> *Vigenere1 highlights and LRPHUP: length 6, positions 230, 280 and 360. 1280×1200, 127,823 bytes.*
 
 ![Dark English input and classification](assets/screenshot3.png)
-> *The top of the dark English page after analyzing vigenere1. 1280×1200, 89,063 bytes.*
+> *Dark English input section after loading vigenere1, with the body-colored completion message and classification. 1280×1000, 81,885 bytes.*
+
+![Guessed key and trial decryption](assets/screenshot4.png)
+> *Vigenere2: KNOWLEDGEISKEY, column candidates and trial plaintext. 1280×1200, 106,893 bytes.*
+
+![LRPHUP occurrence positions and gaps](assets/screenshot5.png)
+> *Vigenere1: three LRPHUP bands, two arcs, gaps 50 and 80, and common divisors 2, 5 and 10. 1280×1200, 68,042 bytes.*
 
 ## ✨ Features
+
+- Five bundled samples and a five-step guide derived from the analysis
+- SVG diagrams of positions, adjacent gaps and common divisors for the selected repeat
+- Per-column chi-square key guesses, editable key letters, trial decryption and transfers to Day009
 
 - Maximal repeats of at least 3 characters, with every occurrence and adjacent gap
 - Preliminary cipher classification using the IC of A–Z letters only
@@ -42,6 +52,14 @@ For classical cryptanalysis practice and learning the Kasiski method, it calcula
 - Japanese/English switching, light/dark themes, keyboard controls and a help dialog
 
 ## 📖 Usage
+
+Choose a bundled sample and select Load to analyze it with space and symbol removal enabled. Labels show types, not keys.
+Go here in Decryption steps scrolls to and focuses the corresponding heading. Steps 2–5 are disabled before analysis.
+Select Diagram in a row to change the gap diagram; the longest repeat is initially selected. Sorting, filtering and pagination preserve selection.
+Positions show at most 20 entries and diagrams at most 12 arcs, with omitted counts. Gaps and common divisors also appear as text.
+Edit key letters in Key guess and trial decryption; Reset to guess restores all columns.
+Trial decryption shows at most 300 A–Z plaintext letters in groups of five, plus the total length.
+Changing key length discards manual letters. Language switching preserves key length, manual letters and diagram selection.
 
 ### Basic steps
 
@@ -104,8 +122,38 @@ The rough Friedman estimate is `(κp−κr)n / ((κp−I)+n(I−κr))`.
 It uses English κp=0.065 and uniform κr=1/26. Fewer than two letters or a nonpositive denominator produces null; estimates below 1 become 1.
 The interface shows one decimal place; the table below uses two. Interpret short texts and non-English statistics carefully.
 
-Classification returns insufficient data below 100 letters, monoalphabetic for IC>0.060, polyalphabetic for IC<0.045 and uncertain in between.
+Classification returns insufficient data below 100 letters, monoalphabetic for IC>0.060, polyalphabetic or near-random for IC<0.045 and uncertain in between.
 Degenerate inputs, such as a long run of one letter, are truncated at a total of 2,000,000 candidate characters or 200,000 positions, with a warning.
+
+### Key Guess and Trial Decryption
+
+Split A–Z ciphertext into L columns and compare all 26 shifts of each column with English letter frequencies.
+The chi-square statistic is `χ² = Σ (observed − expected)² / expected`; expected counts are column length times letter frequency.
+The 26 Lewand frequencies are identical to Day009 Frequency Analyzer and sum to 99.999%. Choose the smallest statistic, breaking ties toward A.
+A column is a close contest when the second-best χ² is less than 1.5 times the best; a best value of zero is never close.
+This assumes additive Vigenere encryption, not Beaufort or other variants.
+The default is 1 when column IC suggests 1; otherwise use agreement, or the smaller length when one estimate is a multiple of the other.
+For other disagreements use Kasiski. Use the only available estimate, or try 1 when both are null.
+
+| Sample | Default length | Guessed key | First 30 trial plaintext letters |
+|---|---|---|---|
+| caesar | 1 | D | WHENINAPRILTHESWEETSHOWERSFALL |
+| shift | 1 | Q | WHENINAPRILTHESWEETSHOWERSFALL |
+| vigenere1 | 5 | LEMON | WHENINAPRILTHESWEETSHOWERSFALL |
+| vigenere2 | 14 | KNOWLEDGEISKEY | CRYPTOGRAPHYISFASCINATINGANDST |
+| random | — (try 1) | Q | OGDSTCDUOYUWUYZFYNHZYGYBAQUHHV |
+
+### When the Ciphertext Is Short
+
+For the first 150 A–Z letters of vigenere1, Kasiski suggests 20 and column IC 5, so their multiple relationship selects 5.
+The guess is LEION. Column 3 is close: I (44.9) versus M (63.6). Changing it to M makes the plaintext readable.
+At 200 letters the guess becomes LEMON. This comparison uses A–Z prefixes.
+
+| Letters | Kasiski | Column IC | Default | Guessed key | Close columns |
+|---|---|---|---|---|---|
+| 100 | 15 | 5 | 5 | LEION | 3 |
+| 150 | 20 | 5 | 5 | LEION | 3 |
+| 200 | 20 | 5 | 5 | LEMON | — |
 
 ### Changes from the previous version
 
@@ -123,7 +171,7 @@ Key estimates use ratios and column IC instead of raw divisor counts, and an uns
 | random | `samples/random/random.txt` | Random | — | 2000 | 116 | null | null | null |
 
 Null means no estimate meets the method's rule. Random is a comparison fixture, not a cipher.
-To inspect a sample in the interface, paste its contents or select the corresponding file.
+Load a sample using the selector, paste its contents or select the corresponding file.
 
 ## 🔒 Security
 
@@ -137,6 +185,9 @@ If storage is blocked, the current page remains functional. Input and analysis r
 GitHub Pages does not support arbitrary response headers, so protection against framing is not guaranteed.
 
 ## 🔗 Related Tools
+
+Each key column can be passed to Day009 Frequency Analyzer through `?text=`. Columns over 5,000 letters show a reason instead of a link.
+The classification link also includes A–Z input when no longer than 5,000 letters. No external request occurs until a link is activated.
 
 - [Caesar Cipher Wheel Tool](https://github.com/ipusiron/caesar-cipher-wheel): Caesar cipher visualization
 - [Caesar Cipher Breaker](https://github.com/ipusiron/caesar-cipher-breaker): brute-force Caesar deciphering
@@ -157,9 +208,10 @@ The README known-answer table is also checked by recalculating values from the s
 | File | Coverage |
 |---|---|
 | test/core.test.js | Five samples, small examples, normalization, 500 brute-force comparisons and degenerate inputs |
+| test/samples.test.js | Embedded sample bytes match the fixtures and contain no answer keys |
 | test/i18n.test.js | Matching language keys, used keys, empty values and Japanese literals in application code |
 | test/html.test.js | CSP, referrer, links, ARIA and safe DOM rendering |
-| test/contrast.test.js | Fourteen text color pairs and focus outlines in both themes |
+| test/contrast.test.js | Eighteen color pairs including information, errors and diagrams, plus focus outlines in both themes |
 | test/format.test.js | Maximum line lengths and minimum file lengths |
 | test/readme.test.js | Known answers, YAML, complete file tree, headings and images |
 
@@ -182,9 +234,12 @@ repeatseq-analyzer/                # Project root
 ├── assets/                        # README screenshots
 │   ├── screenshot.png             # Vigenere2: both key estimates are 14
 │   ├── screenshot2.png            # Vigenere1 highlights and repeated sequence table
-│   └── screenshot3.png            # Vigenere1: dark English page header and classification
+│   ├── screenshot3.png            # Vigenere1: dark English input, completion message and classification
+│   ├── screenshot4.png            # Key guess and trial decryption of vigenere2
+│   └── screenshot5.png            # LRPHUP gap diagram from vigenere1
 ├── js/                            # Classic scripts compatible with file URLs
 │   ├── repeatseq-core.js          # DOM-independent maximal repeats, ratios, IC and Friedman
+│   ├── samples.js                 # Embedded ciphertexts for loading under file://
 │   ├── app.js                     # Input, safe DOM rendering and interface controls
 │   ├── i18n.js                    # Japanese and English dictionaries, structured help and switching
 │   └── theme-init.js              # Saved theme applied before first paint
@@ -209,6 +264,7 @@ repeatseq-analyzer/                # Project root
 │       └── plaintext.txt          # Plaintext
 └── test/                          # Dependency-free node:test suite
     ├── core.test.js               # Five known answers, examples and seeded brute-force comparison
+    ├── samples.test.js            # Embedded samples match their source files
     ├── i18n.test.js               # Dictionary consistency and no Japanese literals in application code
     ├── html.test.js               # CSP, metadata, ARIA and safe DOM constraints
     ├── contrast.test.js           # WCAG contrast of at least 4.5 in both themes

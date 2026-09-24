@@ -22,3 +22,7 @@ for (const [file, min] of minimums) {
     assert.ok(fs.readFileSync(path.join(root, file), 'utf8').split(/\r?\n/).length >= min);
   });
 }
+
+test('readable structure: js/samples.js', () => {
+  assert.ok(fs.readFileSync(path.join(root, 'js/samples.js'), 'utf8').split(/\r?\n/).length >= 50);
+});

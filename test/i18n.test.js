@@ -4,6 +4,22 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { messages, helpSections } = require('../js/i18n.js');
 const root = path.resolve(__dirname, '..');
+
+test('guide, sample and diagram dynamic keys have matching translations', () => {
+  for (const lang of ['ja', 'en']) {
+    for (let n = 1; n <= 5; n++) assert.ok(messages[lang]['guide.step' + n]);
+    for (const id of ['caesar', 'shift', 'vigenere1', 'vigenere2', 'random']) assert.ok(messages[lang]['sample.' + id]);
+    for (const key of ['heading', 'positions', 'gaps', 'divisors', 'omitted']) assert.ok(messages[lang]['diagram.' + key]);
+  }
+});
+
+test('key guess translations exist in both languages', () => {
+  for (const lang of ['ja', 'en']) {
+    for (const key of ['heading', 'length', 'reset', 'label', 'manual', 'close', 'tooLong', 'multiple', 'note']) {
+      assert.ok(messages[lang]['guess.' + key]);
+    }
+  }
+});
 const ranges = [[0x3040, 0x30ff], [0x4e00, 0x9fff], [0xff01, 0xff60]];
 const japanese = new RegExp('[' + ranges.map(([a, b]) =>
   String.fromCodePoint(a) + '-' + String.fromCodePoint(b)).join('') + ']');

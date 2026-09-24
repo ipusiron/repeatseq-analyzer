@@ -4,6 +4,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
 const pairs = [
+  ['input information', 'text-color', 'section-bg'],
+  ['input error', 'error-text', 'section-bg'],
+  ['gap bands', 'error-text', 'section-bg'],
+  ['gap arcs', 'link-text', 'section-bg'],
   ['body', 'text-color', 'bg-color'],
   ['section', 'text-color', 'section-bg'],
   ['header', 'header-text', 'header-bg'],

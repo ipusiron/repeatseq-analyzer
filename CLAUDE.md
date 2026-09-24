@@ -23,7 +23,8 @@ No build step, runtime network requests, external fonts or npm dependencies are 
 - `js/i18n.js`: Japanese/English dictionaries, structured help and language selection.
 - `js/theme-init.js`: synchronous theme initialization in head before the stylesheet.
 - `samples/`: immutable known-answer fixtures.
-- `assets/`: three README screenshots.
+- `assets/`: five README screenshots.
+- `js/samples.js`: five embedded ciphertext fixtures, byte-identical to their source files, with no keys or plaintext answers.
 - `README.md` and `README.en.md`: matching sections, known answers and complete file trees.
 - `.github/workflows/test.yml`: dependency-free Node 22 tests.
 
@@ -77,7 +78,8 @@ Never persist ciphertext or results. Apply the saved theme to the root before th
 | test/core.test.js | Five known answers, examples, normalization, 500 seeded brute-force cases, limits and Kasiski rules |
 | test/i18n.test.js | Matching keys, used keys, nonempty values and no Japanese literals in application code |
 | test/html.test.js | CSP, referrer, accessible elements, links, early theme and safe DOM |
-| test/contrast.test.js | Fourteen text/background pairs and focus outlines for both themes |
+| test/contrast.test.js | Eighteen color pairs and focus outlines for both themes |
+| test/samples.test.js | Embedded samples match file bytes, ordered IDs and no answer keys |
 | test/format.test.js | Line length limits and minimum file lengths against minification |
 | test/readme.test.js | Both known-answer tables, metadata, complete file trees, sections and image references |
 
@@ -91,5 +93,21 @@ Never persist ciphertext or results. Apply the saved theme to the root before th
 | vigenere2 | 4937 | 288 | 14 | 14 | 11.87 |
 | random | 2000 | 116 | null | null | null |
 
-The tool estimates key lengths; it does not recover keys or plaintext.
-On-screen sample loading, a step-by-step guide and transfers to other tools are intentionally deferred.
+## Key Guesses and Trial Decryption
+
+Preserve columnsOf, chiSquare, guessKey, vigenereDecrypt and suggestedLength from the supplied reference.
+ENGLISH_FREQ is the same 26-entry Lewand percentage table as Day009 (sum 99.999).
+CLOSE_RATIO is 1.5: second.chi < CLOSE_RATIO * best.chi marks a close contest; a best score of zero is never close.
+Default length: column IC 1 first, agreement, smaller of multiples, Kasiski, column IC alone, then null (UI tries 1).
+Defaults/keys: caesar 1/D, shift 1/Q, vigenere1 5/LEMON, vigenere2 14/KNOWLEDGEISKEY, random null (try 1)/Q.
+Vigenere1 at 150 letters: Kasiski 20, column IC 5, default 5, LEION; column 3 I 44.9 versus M 63.6 is close.
+At 200 letters the guess is LEMON. Never alter existing cryptographic expectations.
+Always use normalized A-Z for guesses, irrespective of the symbol setting. Trial decryption assumes additive Vigenere.
+Render the first 300 letters in five-letter groups, with total length. Manual edits update the preview without reanalysis.
+Changing length discards edits; changing language preserves them. Input changes clear all stale results.
+Day009 links use ?text= plus encodeURIComponent, with a 5,000-letter limit, target=_blank and noopener noreferrer.
+Keep samples.js mechanically generated from fixtures, with no answer keys, plaintext or type metadata.
+Do not use fetch or XMLHttpRequest: embedded classic scripts must work under file://.
+The five-step guide derives its state from analysis and key edits; it has no separate persisted state.
+Gap diagrams use sequence strings as keys and keep selection through sorting/filtering/paging/language changes.
+Use SVG DOM APIs, CSS theme colors and text descriptions, with at most 12 arcs and 20 positions in descriptions.

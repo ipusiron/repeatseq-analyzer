@@ -19,7 +19,7 @@
         <p data-i18n="page.subtitle">暗号文の中にある反復文字列（3文字以上）を検出・可視化し、鍵長推定に活用します。</p>
       </div>
       <div class="header-buttons">
-        <button type="button" id="language-toggle" class="header-btn" data-i18n="language.toggle" data-i18n="language.toggle">English</button>
+        <button type="button" id="language-toggle" class="header-btn" data-i18n="language.toggle">English</button>
         <button type="button" id="help-button" data-i18n-aria-label="help.open" aria-label="詳細なヘルプとカシスキー検査法の解説を表示" class="header-btn" title="詳細なヘルプとカシスキー検査法の解説を表示" data-i18n-title="help.open">
           <span class="help-icon">❓</span>
         </button>
@@ -33,15 +33,22 @@
   </header>
 
   <main>
+    <section id="guide-section">
+      <h2 data-i18n="guide.heading">🧭 解読の手順</h2>
+      <ol id="guide-steps"></ol>
+    </section>
     <section>
-      <h2 data-i18n="input.heading">🔤 暗号文の入力</h2>
+      <h2 id="input-heading" tabindex="-1" data-i18n="input.heading">🔤 暗号文の入力</h2>
+      <label for="sample-select" data-i18n="sample.label">同梱サンプル</label>
+      <select id="sample-select"></select>
+      <button type="button" id="sample-load" data-i18n="sample.load">読み込む</button>
       <div id="drop-zone" class="drop-zone" role="button" tabindex="0" title="テキストファイルをここにドロップするか、クリックしてファイルを選択してください" data-i18n-title="input.dropTitle">
         <p data-i18n="input.drop">📁 テキストファイルをここにドラッグ&ドロップ</p>
         <p class="drop-zone-or" data-i18n="input.or">または</p>
         <p class="drop-zone-click" data-i18n="input.choose">クリックしてファイルを選択</p>
         <input type="file" id="file-input" accept=".txt,text/plain" hidden>
       </div>
-      <label for="ciphertext" data-i18n="input.label" data-i18n="input.label">暗号文</label>
+      <label for="ciphertext" data-i18n="input.label">暗号文</label>
       <textarea id="ciphertext" rows="10" placeholder="ここに暗号文を貼り付けてください（英字）" data-i18n-placeholder="input.placeholder" title="暗号文を入力してください。大文字・小文字は自動で統一されます" data-i18n-title="input.title"></textarea>
       <p id="input-message" aria-live="polite"></p>
       <div>
@@ -51,7 +58,7 @@
     </section>
 
     <section data-result hidden>
-      <h2 data-i18n="type.heading">🔍 暗号種別の事前判定</h2>
+      <h2 id="type-heading" tabindex="-1" data-i18n="type.heading">🔍 暗号種別の事前判定</h2>
       <div id="cipher-type-analysis" class="output-box">
         <div id="cipher-type-result"></div>
       </div>
@@ -63,7 +70,7 @@
     </section>
 
     <section data-result hidden>
-      <h2 data-i18n="repeat.heading">📋 検出された反復文字列</h2>
+      <h2 id="repeat-heading" tabindex="-1" data-i18n="repeat.heading">📋 検出された反復文字列</h2>
       <div id="filter-controls" class="filter-controls">
         <label class="filter-label" title="文字列の長さでフィルタリングできます。複数選択可能" data-i18n-title="filter.title" data-i18n="filter.label">長さの絞り込み</label>
         <div id="length-filters" class="length-filters">
@@ -98,6 +105,7 @@
             <th data-i18n="col.gaps">間隔</th>
             <th data-i18n="col.divisors">間隔を割り切る数</th>
             <th data-i18n="col.chance">偶然の見込み</th>
+            <th data-i18n="diagram.button">図</th>
           </tr>
         </thead>
         <tbody>
@@ -108,6 +116,12 @@
     </section>
 
     <section data-result hidden>
+      <h2 id="diagram-heading" data-i18n="diagram.heading">📐 間隔の図</h2>
+      <div id="gap-diagram"></div>
+      <div id="gap-description"></div>
+    </section>
+
+    <section data-result hidden>
       <h2 data-i18n="stats.heading">📊 統計情報</h2>
       <div id="statistics-summary" class="statistics-container">
         <!-- 統計情報がここに表示される -->
@@ -115,7 +129,7 @@
     </section>
 
     <section id="keylength-section">
-      <h2 data-i18n="key.heading">🧠 鍵長の推定</h2>
+      <h2 id="key-heading" tabindex="-1" data-i18n="key.heading">🧠 鍵長の推定</h2>
       <label for="max-keylength" data-i18n="key.max">鍵長の上限</label>
       <select id="max-keylength">
         <option value="20">20</option>
@@ -149,6 +163,28 @@
         <p id="friedman-result"></p>
       </div>
     </section>
+    <section id="guess-section" data-result hidden>
+      <h2 id="guess-heading" tabindex="-1" data-i18n="guess.heading">🔑 鍵の推定と試し読み</h2>
+      <label for="guess-length" data-i18n="guess.length">試す鍵長</label>
+      <select id="guess-length"></select>
+      <p id="guess-reason"></p>
+      <p id="guessed-key" aria-live="polite"></p>
+      <button type="button" id="guess-reset" data-i18n="guess.reset">推定に戻す</button>
+      <p id="trial-preview" class="output-box"></p>
+      <p id="trial-count"></p>
+      <p data-i18n="guess.note">ヴィジュネル暗号（加算）を仮定しています。ボーフォート暗号などでは読めません。</p>
+      <div class="table-scroll" role="region" tabindex="0" aria-label="鍵の列の表" data-i18n-aria-label="guess.region">
+        <table id="guess-table">
+          <thead><tr>
+            <th data-i18n="guess.column">列</th><th data-i18n="guess.n">文字数</th><th>IC</th>
+            <th data-i18n="guess.letter">鍵の文字</th><th data-i18n="guess.best">1位（χ²）</th>
+            <th data-i18n="guess.second">2位（χ²）</th><th data-i18n="guess.close">接戦</th>
+            <th data-i18n="guess.frequency">頻度分析</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <footer>
@@ -169,6 +205,7 @@
   </dialog>
 
   <script src="js/repeatseq-core.js"></script>
+  <script src="js/samples.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/app.js"></script>
 </body>
