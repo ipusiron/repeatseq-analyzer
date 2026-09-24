@@ -107,6 +107,13 @@ function invalidateResults() {
   allMatches = [];
   highlightEnabled.clear();
   document.querySelectorAll('[data-result]').forEach(el => { el.hidden = true; });
+  // Drop stale dynamic text too, including content inside hidden sections.
+  const staleSelectors = [
+    '#cipher-type-result', '#highlighted-text', '#result-table tbody', '#statistics-summary',
+    '#kasiski-table tbody', '#column-ic-table tbody', '#keylength-summary', '#friedman-result',
+    '#length-filters', '#page-info'
+  ];
+  staleSelectors.forEach(selector => document.querySelector(selector).replaceChildren());
   showMessage('input.stale');
 }
 
