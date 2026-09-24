@@ -5,6 +5,89 @@ const path = require('node:path');
 const core = require('../js/repeatseq-core.js');
 const round = (n, places) => n === null ? null : Number(n.toFixed(places));
 
+const trialPrefix = 'WHENINAPRILTHESWEETSHOWERSFALLANDPIERCETHEDROUGHTOFMARCHTOTH';
+const guesses = [
+  ['caesar', 1, 1, 'D', 614, 'D', 28.01, 'O', 1851.43, trialPrefix],
+  ['shift', 1, 1, 'Q', 614, 'Q', 28.01, 'B', 1851.43, trialPrefix],
+  ['vigenere1', 5, 5, 'LEMON', 123, 'L', 41.63, 'W', 257.98, trialPrefix],
+  ['vigenere2', 14, 14, 'KNOWLEDGEISKEY', 353, 'K', 118.59, 'Q', 907.61,
+    'CRYPTOGRAPHYISFASCINATINGANDSTUDYINGCLASSICCIPHERSHELPSUSUND'],
+  ['random', null, 1, 'Q', 2000, 'Q', 10169.10, 'X', 10295.91,
+    'OGDSTCDUOYUWUYZFYNHZYGYBAQUHHVQAMOBNTZXDGRSJPCQZTOXSCMCTQXUS']
+];
+
+function sampleText(name) {
+  const file = name === 'random' ? 'random.txt' : 'ciphertext.txt';
+  return core.normalize(fs.readFileSync(path.join(__dirname, '..', 'samples', name, file), 'utf8'));
+}
+
+for (const [name, suggested, L, key, n, best, chi, second, chi2, prefix] of guesses) {
+  test(`A-6 key guess: ${name}`, () => {
+    const text = sampleText(name);
+    const result = core.guessKey(text, L);
+    assert.equal(core.suggestedLength(core.analyze(text)), suggested);
+    assert.equal(result.key, key);
+    const col = result.columns[0];
+    assert.deepEqual([col.n, col.best.letter, round(col.best.chi, 2), col.second.letter, round(col.second.chi, 2)],
+      [n, best, chi, second, chi2]);
+  });
+  test(`A-6 first 60 plaintext characters: ${name}`, () => {
+    const text = sampleText(name);
+    assert.equal(core.vigenereDecrypt(text, core.guessKey(text, L).key).slice(0, 60), prefix);
+  });
+}
+
+const shortGuesses = [
+  [100, 15, 'LEION', [3], [['L', 27.7, 'W', 86.8], ['E', 11.3, 'Q', 46.8], ['I', 53.1, 'V', 72.5],
+    ['O', 12.2, 'B', 45.4], ['N', 17.3, 'T', 39.2]]],
+  [150, 20, 'LEION', [3], [['L', 32.9, 'W', 87.3], ['E', 17.0, 'X', 86.0], ['I', 44.9, 'M', 63.6],
+    ['O', 16.6, 'B', 85.6], ['N', 13.0, 'U', 86.5]]],
+  [200, 20, 'LEMON', [], [['L', 47.9, 'P', 79.0], ['E', 19.6, 'X', 132.9], ['M', 49.0, 'I', 101.0],
+    ['O', 51.0, 'B', 80.2], ['N', 17.5, 'D', 140.9]]]
+];
+for (const [n, k, key, close, columns] of shortGuesses) {
+  test(`A-6 short ciphertext: ${n}`, () => {
+    const text = sampleText('vigenere1').slice(0, n);
+    const a = core.analyze(text);
+    const guess = core.guessKey(text, 5);
+    assert.deepEqual([a.kasiski.best, a.columnIC.best, core.suggestedLength(a), guess.key], [k, 5, 5, key]);
+    assert.deepEqual(guess.columns.filter(c => c.second.chi < core.CLOSE_RATIO * c.best.chi).map(c => c.index + 1), close);
+    assert.deepEqual(guess.columns.map(c => [c.best.letter, round(c.best.chi, 1), c.second.letter, round(c.second.chi, 1)]), columns);
+  });
+}
+
+test('English frequencies, column splitting, empty-column tie breaking and close boundary', () => {
+  assert.equal(core.ENGLISH_FREQ.length, 26);
+  assert.equal(round(core.ENGLISH_FREQ.reduce((sum, n) => sum + n, 0), 3), 99.999);
+  assert.deepEqual(core.columnsOf('ABCDEFG', 3), ['ADG', 'BE', 'CF']);
+  assert.equal(core.CLOSE_RATIO, 1.5);
+  assert.equal(15 < core.CLOSE_RATIO * 10, false);
+  assert.equal(14.99 < core.CLOSE_RATIO * 10, true);
+  const empty = core.guessKey('', 1).columns[0];
+  assert.deepEqual([empty.best.letter, empty.second.letter, empty.best.chi], ['A', 'B', 0]);
+  assert.equal(empty.second.chi < core.CLOSE_RATIO * empty.best.chi, false);
+});
+
+test('eight default key length branches', () => {
+  for (const [k, L, expected] of [[5, 1, 1], [5, 5, 5], [20, 5, 5], [5, 20, 5],
+    [6, 4, 6], [7, null, 7], [null, 9, 9], [null, null, null]]) {
+    assert.equal(core.suggestedLength({ kasiski: { best: k }, columnIC: { best: L } }), expected);
+  }
+});
+
+test('100 seeded plaintexts with each key length 1-20 round-trip', () => {
+  const next = random(2802);
+  const letters = n => Array.from({ length: n }, () => core.ALPHA[Math.floor(next() * 26)]).join('');
+  for (let trial = 0; trial < 100; trial++) {
+    const plain = letters(1 + trial * 3);
+    for (let L = 1; L <= 20; L++) {
+      const key = letters(L);
+      const cipher = [...plain].map((c, i) => core.ALPHA[(c.charCodeAt(0) + key.charCodeAt(i % L) - 130) % 26]).join('');
+      assert.equal(core.vigenereDecrypt(cipher, key), plain);
+    }
+  }
+});
+
 const samples = [
   ['caesar', 614, 83, 149, 'WRVHHNWKH', 9, [425, 547],
     [[20, 13, 1.7450], [18, 13, 1.5705], [10, 21, 1.4094]], null, 1, 0.0651, 1, 'mono', 0.0651,

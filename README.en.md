@@ -157,6 +157,7 @@ The README known-answer table is also checked by recalculating values from the s
 | File | Coverage |
 |---|---|
 | test/core.test.js | Five samples, small examples, normalization, 500 brute-force comparisons and degenerate inputs |
+| test/samples.test.js | Embedded sample bytes match the fixtures and contain no answer keys |
 | test/i18n.test.js | Matching language keys, used keys, empty values and Japanese literals in application code |
 | test/html.test.js | CSP, referrer, links, ARIA and safe DOM rendering |
 | test/contrast.test.js | Fourteen text color pairs and focus outlines in both themes |
@@ -185,6 +186,7 @@ repeatseq-analyzer/                # Project root
 │   └── screenshot3.png            # Vigenere1: dark English page header and classification
 ├── js/                            # Classic scripts compatible with file URLs
 │   ├── repeatseq-core.js          # DOM-independent maximal repeats, ratios, IC and Friedman
+│   ├── samples.js                 # Embedded ciphertexts for loading under file://
 │   ├── app.js                     # Input, safe DOM rendering and interface controls
 │   ├── i18n.js                    # Japanese and English dictionaries, structured help and switching
 │   └── theme-init.js              # Saved theme applied before first paint
@@ -209,6 +211,7 @@ repeatseq-analyzer/                # Project root
 │       └── plaintext.txt          # Plaintext
 └── test/                          # Dependency-free node:test suite
     ├── core.test.js               # Five known answers, examples and seeded brute-force comparison
+    ├── samples.test.js            # Embedded samples match their source files
     ├── i18n.test.js               # Dictionary consistency and no Japanese literals in application code
     ├── html.test.js               # CSP, metadata, ARIA and safe DOM constraints
     ├── contrast.test.js           # WCAG contrast of at least 4.5 in both themes

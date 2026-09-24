@@ -194,6 +194,7 @@ READMEの既知解答表もサンプルとRepeatSeqCoreから再計算して検�
 | ファイル | 検査対象 |
 |---|---|
 | test/core.test.js | 5サンプル、小例、正規化、500本の総当たり比較、退化入力 |
+| test/samples.test.js | 埋め込みサンプルと元ファイルのバイト一致、答えの非混入 |
 | test/i18n.test.js | 日英のキー、使用キー、空の値、JSの日本語リテラル |
 | test/html.test.js | CSP、referrer、リンク、ARIA、安全なDOM描画 |
 | test/contrast.test.js | ライト・ダークの14組の文字色とフォーカス枠 |
@@ -222,6 +223,7 @@ repeatseq-analyzer/                # プロジェクトのルート
 │   └── screenshot3.png            # ダーク・英語のページ先頭（vigenere1）
 ├── js/                            # スクリプト（classic script。file://でも動く）
 │   ├── repeatseq-core.js          # 解析の中核（極大反復・倍率・列IC・フリードマン。DOM非依存）
+│   ├── samples.js                 # 同梱暗号文の埋め込み（file://で読み込むため）
 │   ├── app.js                     # 画面の処理（入力・表・ハイライト・鍵長の推定・ヘルプ）
 │   ├── i18n.js                    # 日英の辞書と切り替え（ヘルプの本文を含む）
 │   └── theme-init.js              # テーマの初回適用（ちらつき防止）
@@ -246,6 +248,7 @@ repeatseq-analyzer/                # プロジェクトのルート
 │       └── plaintext.txt          # 平文
 └── test/                          # 自動テスト（node --test）
     ├── core.test.js               # 解析の期待値（5サンプル・小さな例・総当たりとの突き合わせ）
+    ├── samples.test.js            # 埋め込みサンプルと元ファイルの一致
     ├── i18n.test.js               # 日英の辞書のキーの一致・JSに日本語の直書きがないこと
     ├── html.test.js               # index.htmlの静的検証（CSP・referrer・ARIA・style属性なし）
     ├── contrast.test.js           # style.cssの配色が4.5:1以上（ライト・ダーク）

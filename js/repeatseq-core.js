@@ -140,8 +140,59 @@ const RepeatSeqCore = (() => {
     };
   }
 
+  const ENGLISH_FREQ = [8.167, 1.492, 2.782, 4.253, 12.702, 2.228, 2.015, 6.094, 6.966, 0.153, 0.772, 4.025, 2.406,
+    6.749, 7.507, 1.929, 0.095, 5.987, 6.327, 9.056, 2.758, 0.978, 2.360, 0.150, 1.974, 0.074];
+  const CLOSE_RATIO = 1.5;
+
+  function columnsOf(text, L) {
+    const cols = Array.from({ length: L }, () => '');
+    for (let i = 0; i < text.length; i++) cols[i % L] += text[i];
+    return cols;
+  }
+
+  function chiSquare(col, s) {
+    const cnt = new Array(26).fill(0);
+    for (const c of col) cnt[c.charCodeAt(0) - 65]++;
+    let chi = 0;
+    for (let j = 0; j < 26; j++) {
+      const e = ENGLISH_FREQ[j] / 100 * col.length;
+      const o = cnt[(j + s) % 26];
+      chi += (o - e) * (o - e) / e;
+    }
+    return chi;
+  }
+
+  function guessKey(text, L) {
+    const columns = columnsOf(text, L).map((col, index) => {
+      const ranked = Array.from({ length: 26 }, (_, s) => ({ shift: s, letter: ALPHA[s], chi: col.length ? chiSquare(col, s) : 0 }))
+        .sort((a, b) => a.chi - b.chi || a.shift - b.shift);
+      return { index, text: col, n: col.length, ic: ic(col), best: ranked[0], second: ranked[1] };
+    });
+    return { L, key: columns.map(c => c.best.letter).join(''), columns };
+  }
+
+  function vigenereDecrypt(text, key) {
+    let out = '';
+    for (let i = 0; i < text.length; i++) {
+      const k = key.charCodeAt(i % key.length) - 65;
+      out += ALPHA[(text.charCodeAt(i) - 65 - k + 26) % 26];
+    }
+    return out;
+  }
+
+  function suggestedLength(a) {
+    const k = a.kasiski.best, L = a.columnIC.best;
+    if (L === 1) return 1;
+    if (k !== null && k === L) return k;
+    if (k !== null && L !== null && (k % L === 0 || L % k === 0)) return Math.min(k, L);
+    if (k !== null) return k;
+    if (L !== null) return L;
+    return null;
+  }
+
   return {
-    ALPHA, LIMIT_CHARS, LIMIT_POSITIONS, RATIO_MIN,
+    ALPHA, LIMIT_CHARS, LIMIT_POSITIONS, RATIO_MIN, ENGLISH_FREQ, CLOSE_RATIO,
+    columnsOf, chiSquare, guessKey, vigenereDecrypt, suggestedLength,
     normalize, findRepeats, ic, expectedByChance, kasiski, columnIC, friedman, cipherType, analyze
   };
 })();
