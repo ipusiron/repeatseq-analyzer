@@ -2,11 +2,15 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <title>RepeatSeq Analyzer - 暗号文反復パターン可視化ツール</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <noscript>JavaScriptを有効にしてください。<br>Please enable JavaScript.</noscript>
   <header>
     <div class="header-content">
       <div class="header-title">
@@ -14,10 +18,10 @@
         <p>暗号文の中にある反復文字列（3文字以上）を検出・可視化し、鍵長推定に活用します。</p>
       </div>
       <div class="header-buttons">
-        <button id="help-button" class="header-btn" title="詳細なヘルプとカシスキー検査法の解説を表示">
+        <button type="button" id="help-button" class="header-btn" title="詳細なヘルプとカシスキー検査法の解説を表示">
           <span class="help-icon">❓</span>
         </button>
-        <button id="dark-mode-toggle" class="header-btn dark-mode-toggle" title="ダークテーマとライトテーマを切り替え（設定は自動保存）">
+        <button type="button" id="dark-mode-toggle" class="header-btn dark-mode-toggle" title="ダークテーマとライトテーマを切り替え（設定は自動保存）">
           <span class="dark-mode-icon">🌙</span>
         </button>
       </div>
@@ -31,42 +35,45 @@
         <p>📁 テキストファイルをここにドラッグ&ドロップ</p>
         <p class="drop-zone-or">または</p>
         <p class="drop-zone-click">クリックしてファイルを選択</p>
-        <input type="file" id="file-input" accept=".txt,text/plain" style="display: none;">
+        <input type="file" id="file-input" accept=".txt,text/plain" hidden>
       </div>
       <textarea id="ciphertext" rows="10" placeholder="ここに暗号文を貼り付けてください（英字）" title="暗号文を入力してください。大文字・小文字は自動で統一されます"></textarea>
+      <p id="input-message" aria-live="polite"></p>
       <div>
         <label title="英字以外の文字（数字、記号、空白）を自動除去します（推奨）"><input type="checkbox" id="ignore-spaces" checked> 空白・記号を除去して処理</label>
       </div>
-      <button id="analyze-btn" title="暗号文から3-25文字の反復文字列を検出してハイライト表示し、カシスキー検査法により鍵長候補を推定します">🔍 解析する</button>
+      <button type="button" id="analyze-btn" title="極大反復を検出し、倍率と列ICから鍵長を推定します">🔍 解析する</button>
     </section>
 
-    <section>
+    <section data-result hidden>
       <h2>🔍 暗号種別の事前判定</h2>
-      <div id="cipher-type-analysis" class="output-box" style="display: none;">
+      <div id="cipher-type-analysis" class="output-box">
         <div id="cipher-type-result"></div>
       </div>
     </section>
 
-    <section>
+    <section data-result hidden>
       <h2>🖍 ハイライト結果</h2>
       <div id="highlighted-text" class="output-box">（ここにハイライト表示）</div>
     </section>
 
-    <section>
+    <section data-result hidden>
       <h2>📋 検出された反復文字列</h2>
       <div id="filter-controls" class="filter-controls">
         <label class="filter-label" title="文字列の長さでフィルタリングできます。複数選択可能">フィルター：</label>
         <div id="length-filters" class="length-filters">
           <!-- フィルターチェックボックスがここに動的に生成される -->
         </div>
-        <button id="select-all-btn" class="filter-btn" title="すべての文字列長を選択して表示">全選択</button>
-        <button id="clear-all-btn" class="filter-btn" title="すべての選択を解除（結果非表示）">全解除</button>
+        <button type="button" id="select-all-btn" class="filter-btn" title="すべての文字列長を選択して表示">全選択</button>
+        <button type="button" id="clear-all-btn" class="filter-btn" title="すべての選択を解除（結果非表示）">全解除</button>
       </div>
-      <div id="pagination-controls" style="display: none;">
-        <button id="prev-page" disabled title="前のページを表示（20件ずつ表示）">◀ 前へ</button>
+      <div id="pagination-controls" hidden>
+        <button type="button" id="prev-page" disabled title="前のページを表示（20件ずつ表示）">◀ 前へ</button>
         <span id="page-info" title="現在のページ位置と総件数"></span>
-        <button id="next-page" title="次のページを表示（20件ずつ表示）">次へ ▶</button>
+        <button type="button" id="next-page" title="次のページを表示（20件ずつ表示）">次へ ▶</button>
       </div>
+      <p id="truncated-warning" class="warning-message" hidden>反復が多すぎるため途中で打ち切りました（同じ文字の連続など）。</p>
+      <div class="table-scroll" role="region" tabindex="0" aria-label="反復の表">
       <table id="result-table">
         <thead>
           <tr>
@@ -74,64 +81,83 @@
               <div class="highlight-control-header">
                 ハイライト
                 <div class="highlight-control-buttons">
-                  <button id="highlight-all-btn" class="highlight-control-btn" title="すべての項目のハイライトを有効化">全</button>
-                  <button id="highlight-none-btn" class="highlight-control-btn" title="すべての項目のハイライトを無効化">無</button>
+                  <button type="button" id="highlight-all-btn" class="highlight-control-btn" title="すべての項目のハイライトを有効化">すべて表示</button>
+                  <button type="button" id="highlight-none-btn" class="highlight-control-btn" title="すべての項目のハイライトを無効化">すべて隠す</button>
                 </div>
               </div>
             </th>
-            <th class="sortable" data-column="seq" title="検出された反復パターン。クリックで並び替え">文字列 <span class="sort-indicator"></span></th>
-            <th class="sortable" data-column="len" title="文字列の文字数。長いほど信頼性が高い">長さ <span class="sort-indicator">▼</span></th>
-            <th class="sortable" data-column="confidence" title="このパターンの信頼性（0-100%）。計算根拠：文字列長、出現頻度、間隔妥当性、公約数有用性">信頼度 <span class="sort-indicator"></span></th>
-            <th class="sortable" data-column="first" title="暗号文内での最初の出現位置（0から開始）">1回目位置 <span class="sort-indicator"></span></th>
-            <th class="sortable" data-column="second" title="暗号文内での2回目の出現位置">2回目位置 <span class="sort-indicator"></span></th>
-            <th class="sortable" data-column="gap" title="1回目と2回目の間隔。この値の公約数が鍵長候補になります">間隔 <span class="sort-indicator"></span></th>
-            <th title="間隔の約数（1を除く）。これらが鍵長の候補です">公約数（1除外）</th>
+            <th class="sortable" data-column="seq" aria-sort="none"><button type="button">文字列</button></th>
+            <th class="sortable" data-column="len" aria-sort="descending"><button type="button">長さ</button></th>
+            <th class="sortable" data-column="count" aria-sort="none"><button type="button">出現回数</button></th>
+            <th class="sortable" data-column="first" aria-sort="none"><button type="button">出現位置</button></th>
+            <th>間隔</th>
+            <th>間隔を割り切る数</th>
+            <th>偶然の見込み</th>
           </tr>
         </thead>
         <tbody>
           <!-- 検出結果がここに表示される -->
         </tbody>
       </table>
+      </div>
     </section>
 
-    <section>
+    <section data-result hidden>
       <h2>📊 統計情報</h2>
       <div id="statistics-summary" class="statistics-container">
         <!-- 統計情報がここに表示される -->
       </div>
     </section>
 
-    <section>
-      <h2>🧠 鍵長の候補（推定）</h2>
-      <div class="keylength-controls">
-        <label class="toggle-label" title="鍵長3以下の候補を一覧から除外（古典暗号では現実的でないため）">
-          <input type="checkbox" id="hide-short-keys" class="toggle-checkbox">
-          <span class="toggle-slider"></span>
-          鍵長3以下を非表示
-        </label>
-        <label class="toggle-label" title="鍵長20以上の候補を一覧から除外（手動暗号では非現実的なため）">
-          <input type="checkbox" id="hide-long-keys" class="toggle-checkbox">
-          <span class="toggle-slider"></span>
-          鍵長20以上を非表示
-        </label>
+    <section id="keylength-section">
+      <h2>🧠 鍵長の推定</h2>
+      <label for="max-keylength">鍵長の上限</label>
+      <select id="max-keylength">
+        <option value="20">20</option>
+        <option value="30">30</option>
+        <option value="40">40</option>
+      </select>
+      <div data-result hidden>
+        <p id="keylength-summary" aria-live="polite"></p>
+        <p>偶数の間隔はすべて2で割り切れるので、数だけ見ると小さい数が必ず上位に来ます。倍率は偶然の場合と比べた値です。</p>
+        <div class="estimate-grid">
+          <div>
+            <h3>カシスキーの倍率</h3>
+            <div class="table-scroll" role="region" tabindex="0" aria-label="カシスキーの表">
+              <table id="kasiski-table">
+                <thead><tr><th>k</th><th>割り切れる間隔の数</th><th>偶然なら</th><th>倍率</th><th>比較</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h3>列IC</h3>
+            <p>最初に0.060以上になる鍵長が目安です（A-Zだけで計算）。</p>
+            <div class="table-scroll" role="region" tabindex="0" aria-label="列ICの表">
+              <table id="column-ic-table">
+                <thead><tr><th>L</th><th>平均IC</th><th>比較</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <p id="friedman-result"></p>
       </div>
-      <div id="keylength-hints" class="output-box">（公約数に基づく候補がここに表示されます）</div>
-      <div id="keylength-warning" class="warning-message" style="display: none;"></div>
     </section>
   </main>
 
   <footer>
     <div class="footer">
-      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/repeatseq-analyzer" target="_blank">ipusiron/repeatseq-analyzer</a> ）
+      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/repeatseq-analyzer" target="_blank" rel="noopener noreferrer">ipusiron/repeatseq-analyzer</a> ）
     </div>
   </footer>
 
   <!-- ヘルプモーダル -->
-  <div id="help-modal" class="modal">
+  <div id="help-modal" class="modal" hidden>
     <div class="modal-content">
       <div class="modal-header">
         <h2>🔁 RepeatSeq Analyzer ヘルプ</h2>
-        <button class="modal-close" id="help-modal-close">&times;</button>
+        <button type="button" class="modal-close" id="help-modal-close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="help-section">
@@ -291,16 +317,17 @@
         <div class="help-section">
           <h3>🔗 関連ツール</h3>
           <ul>
-            <li><a href="https://github.com/ipusiron/caesar-cipher-wheel" target="_blank">Caesar Cipher Wheel Tool</a> - シーザー暗号の可視化</li>
-            <li><a href="https://github.com/ipusiron/caesar-cipher-breaker" target="_blank">Caesar Cipher Breaker</a> - シーザー暗号の総当たり解読</li>
-            <li><a href="https://github.com/ipusiron/frequency-analyzer" target="_blank">Frequency Analyzer</a> - 単一換字式暗号の頻度分析</li>
-            <li><a href="https://github.com/ipusiron/vigenere-cipher-tool" target="_blank">Vigenère Cipher Tool</a> - ヴィジュネル暗号の暗号化・復号</li>
+            <li><a href="https://github.com/ipusiron/caesar-cipher-wheel" target="_blank" rel="noopener noreferrer">Caesar Cipher Wheel Tool</a> - シーザー暗号の可視化</li>
+            <li><a href="https://github.com/ipusiron/caesar-cipher-breaker" target="_blank" rel="noopener noreferrer">Caesar Cipher Breaker</a> - シーザー暗号の総当たり解読</li>
+            <li><a href="https://github.com/ipusiron/frequency-analyzer" target="_blank" rel="noopener noreferrer">Frequency Analyzer</a> - 単一換字式暗号の頻度分析</li>
+            <li><a href="https://github.com/ipusiron/vigenere-cipher-tool" target="_blank" rel="noopener noreferrer">Vigenère Cipher Tool</a> - ヴィジュネル暗号の暗号化・復号</li>
           </ul>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="js/repeatseq-core.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

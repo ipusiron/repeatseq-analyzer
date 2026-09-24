@@ -11,7 +11,7 @@ for (const file of ['js/repeatseq-core.js', 'test/core.test.js', 'test/format.te
   });
 }
 
-for (const [file, min] of [['style.css', 700], ['index.html', 150], ['js/repeatseq-core.js', 100]]) {
+for (const [file, min] of [['style.css', 700], ['index.html', 150], ['js/repeatseq-core.js', 100], ['js/app.js', 400]]) {
   test(`readable structure: ${file}`, () => {
     assert.ok(fs.readFileSync(path.join(root, file), 'utf8').split(/\r?\n/).length >= min);
   });

@@ -973,3 +973,57 @@ footer {
 .footer a:hover {
   text-decoration: underline;
 }
+
+
+/* Analysis output uses DOM nodes and native controls instead of inline styles. */
+[hidden] {
+  display: none !important;
+}
+
+.modal:not([hidden]) {
+  display: block;
+}
+
+.modal-open {
+  overflow: hidden;
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.highlight-control-btn {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 0.875rem;
+}
+
+#highlighted-text {
+  white-space: pre-wrap;
+}
+
+.estimate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.estimate-grid th,
+.estimate-grid td {
+  padding: 0.15rem 0.35rem;
+}
+
+.estimate-grid meter {
+  width: 4rem;
+}
+
+.best-estimate {
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .estimate-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
