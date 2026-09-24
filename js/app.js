@@ -27,7 +27,7 @@ const fileInput = document.getElementById("file-input");
 function readFile(file) {
   invalidateResults();
   if (file.size > 1024 * 1024) {
-    showMessage("ファイルは1MB以下にしてください。");
+    showMessage('error.fileSize');
     return;
   }
   // テキストファイルかチェック
@@ -41,12 +41,12 @@ function readFile(file) {
     };
     
     reader.onerror = () => {
-      showMessage("ファイルの読み込みに失敗しました。");
+      showMessage('error.fileRead');
     };
     
     reader.readAsText(file);
   } else {
-    showMessage("テキストファイル（.txt）を選択してください。");
+    showMessage('error.fileType');
   }
 }
 
@@ -95,8 +95,11 @@ function node(tag, text = '', className = '') {
   return element;
 }
 
-function showMessage(message) {
-  document.getElementById('input-message').textContent = message;
+let messageState = null;
+
+function showMessage(key, params = {}) {
+  messageState = { key, params };
+  document.getElementById('input-message').textContent = i18n.t(key, params);
 }
 
 function invalidateResults() {
@@ -104,7 +107,7 @@ function invalidateResults() {
   allMatches = [];
   highlightEnabled.clear();
   document.querySelectorAll('[data-result]').forEach(el => { el.hidden = true; });
-  showMessage('入力や設定を確認し、「解析する」を押してください。');
+  showMessage('input.stale');
 }
 
 cipherTextArea.addEventListener('input', invalidateResults);
@@ -114,15 +117,16 @@ document.getElementById('max-keylength').addEventListener('change', invalidateRe
 document.getElementById('analyze-btn').addEventListener('click', () => {
   const raw = cipherTextArea.value;
   const lettersOnly = document.getElementById('ignore-spaces').checked;
-  const maxK = Number(document.getElementById('max-keylength').value);
+  const chosenMax = Number(document.getElementById('max-keylength').value);
+  const maxK = [20, 30, 40].includes(chosenMax) ? chosenMax : 20;
   const text = RepeatSeqCore.normalize(raw, lettersOnly);
   invalidateResults();
   if (!text.length) {
-    showMessage('解析する文字列を入力してください。');
+    showMessage('error.empty');
     return;
   }
   if (text.length > 10000) {
-    showMessage(`上限は10,000文字です（現在${text.length}文字）。`);
+    showMessage('error.tooLong', { n: text.length });
     return;
   }
   analysis = RepeatSeqCore.analyze(raw, { lettersOnly, maxK });
@@ -138,7 +142,7 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
 function renderAnalysis() {
   if (!analysis) return;
   document.querySelectorAll('[data-result]').forEach(el => { el.hidden = false; });
-  showMessage(`解析しました。反復は${analysis.rows.length}件です。`);
+  showMessage('input.done', { n: analysis.rows.length });
   const warning = document.getElementById('truncated-warning');
   warning.hidden = !analysis.truncated;
   displayCipherTypeAnalysis(analysis.cipherType);
@@ -177,15 +181,15 @@ function renderHighlights() {
 }
 
 function shortList(values) {
-  return values.slice(0, 6).join(', ') + (values.length > 6 ? ` …ほか${values.length - 6}個` : '');
+  return values.slice(0, 6).join(', ') + (values.length > 6 ? ' ' + i18n.t('list.more', { n: values.length - 6 }) : '');
 }
 
 function shortSequence(seq) {
-  return seq.length > 24 ? `${seq.slice(0, 24)}…（全${seq.length}文字）` : seq;
+  return seq.length > 24 ? i18n.t('seq.short', { seq: seq.slice(0, 24), n: seq.length }) : seq;
 }
 
 function chanceText(value) {
-  return value >= 1 ? `約${Math.round(value)}組` : `${value.toFixed(2)}組`;
+  return value >= 1 ? i18n.t('chance.large', { n: Math.round(value) }) : i18n.t('chance.small', { n: value.toFixed(2) });
 }
 
 function filteredRows() {
@@ -209,7 +213,7 @@ function renderTableWithPagination() {
     toggle.className = 'highlight-checkbox';
     toggle.dataset.seq = seq;
     toggle.checked = highlightEnabled.has(seq);
-    toggle.setAttribute('aria-label', `ハイライト: ${shortSequence(seq)}`);
+    toggle.setAttribute('aria-label', i18n.t('highlight.row', { seq: shortSequence(seq) }));
     toggle.addEventListener('change', handleHighlightToggle);
     const control = node('td');
     control.appendChild(toggle);
@@ -224,7 +228,7 @@ function renderTableWithPagination() {
     tbody.appendChild(tr);
   });
   document.getElementById('pagination-controls').hidden = rows.length <= ITEMS_PER_PAGE;
-  document.getElementById('page-info').textContent = `${currentPage} / ${totalPages} ページ（全${rows.length}件）`;
+  document.getElementById('page-info').textContent = i18n.t('page.info', { page: currentPage, total: totalPages, n: rows.length });
   document.getElementById('prev-page').disabled = currentPage === 1;
   document.getElementById('next-page').disabled = currentPage === totalPages;
 }
@@ -260,7 +264,10 @@ function updateSortIndicators() {
 function generateLengthFilters() {
   const container = document.getElementById('length-filters');
   container.replaceChildren();
-  [[3, '3文字'], [4, '4文字'], [5, '5〜7文字'], [8, '8文字以上']].forEach(([value, text]) => {
+  [
+    [3, i18n.t('filter.three')], [4, i18n.t('filter.four')],
+    [5, i18n.t('filter.medium')], [8, i18n.t('filter.long')]
+  ].forEach(([value, text]) => {
     const label = node('label', '', 'length-filter-label');
     const checkbox = node('input');
     checkbox.type = 'checkbox';
@@ -309,18 +316,19 @@ function renderStatisticsSummary() {
   box.replaceChildren();
   const longest = analysis.rows[0];
   const fields = [
-    ['解析した文字数', analysis.text.length],
+    [i18n.t('stats.characters'), analysis.text.length],
     ['IC', analysis.kappa.toFixed(4)],
-    ['反復の数', analysis.rows.length],
-    ['隣り合う出現の間隔の数', analysis.kasiski.gapCount],
-    ['最長の反復', longest ? `${longest.seq.slice(0, 12)}${longest.len > 12 ? '…' : ''}（${longest.len}文字）` : '—'],
-    ['出現位置', longest ? shortList(longest.positions) : '—']
+    [i18n.t('stats.repeats'), analysis.rows.length],
+    [i18n.t('stats.gaps'), analysis.kasiski.gapCount],
+    [i18n.t('stats.longest'), longest ?
+       i18n.t('stats.sequence', { seq: longest.seq.slice(0, 12) + (longest.len > 12 ? '…' : ''), n: longest.len }) : '—'],
+    [i18n.t('col.pos'), longest ? shortList(longest.positions) : '—']
   ];
   fields.forEach(([label, value]) => box.appendChild(node('p', `${label}: ${value}`)));
   const table = node('table');
-  table.appendChild(node('caption', '偶然の見込み'));
+  table.appendChild(node('caption', i18n.t('col.chance')));
   const head = node('tr');
-  ['長さ', 'この長さの一致は、偶然でも約X組できる'].forEach(text => head.appendChild(node('th', text)));
+  [i18n.t('col.len'), i18n.t('chance.explain')].forEach(text => head.appendChild(node('th', text)));
   table.appendChild(head);
   analysis.chance.slice(0, 4).forEach(({ L, expected }) => {
     const row = node('tr');
@@ -333,12 +341,12 @@ function renderStatisticsSummary() {
 function estimateSummary() {
   const k = analysis.kasiski.best;
   const L = analysis.columnIC.best;
-  if (L === 1) return '単一換字（鍵長1）の可能性';
-  if (k !== null && k === L) return `2つの方法が一致: 鍵長 ${k} が有力`;
-  if (k !== null && L !== null) return `一致しない: カシスキー ${k}、列 IC ${L}`;
-  if (k !== null) return `カシスキーだけが ${k} を示す`;
-  if (L !== null) return `列 ICだけが ${L} を示す`;
-  return '周期のはっきりした偏りは見つからない';
+  if (L === 1) return i18n.t('summary.mono');
+  if (k !== null && k === L) return i18n.t('summary.agree', { k });
+  if (k !== null && L !== null) return i18n.t('summary.disagree', { k, L });
+  if (k !== null) return i18n.t('summary.kasiski', { k });
+  if (L !== null) return i18n.t('summary.ic', { L });
+  return i18n.t('summary.none');
 }
 
 function addMeter(row, value, max) {
@@ -379,18 +387,19 @@ function renderKeylengthHints() {
   });
   document.getElementById('keylength-summary').textContent = estimateSummary();
   document.getElementById('friedman-result').textContent =
-    `フリードマンの目安: ${analysis.friedman === null ? '推定できない' : analysis.friedman.toFixed(1)}`;
+    i18n.t('key.friedman', { value: analysis.friedman === null ? i18n.t('key.unknown') : analysis.friedman.toFixed(1) });
 }
 
 function displayCipherTypeAnalysis(result) {
   const messages = {
-    insufficient: '100文字未満のためデータ不足です。',
-    mono: 'ICが0.060を超えるため、単一換字式暗号の可能性があります。',
-    poly: 'ICが0.045未満のため、多表式暗号の可能性があります。',
-    uncertain: '暗号種別の判定が困難です。'
+    insufficient: i18n.t('type.insufficient'),
+    mono: i18n.t('type.mono'),
+    poly: i18n.t('type.poly'),
+    uncertain: i18n.t('type.uncertain')
   };
   const box = document.getElementById('cipher-type-result');
-  box.replaceChildren(node('p', messages[result.type]), node('p', `IC: ${result.ic.toFixed(4)}（A-Zだけで数えた値）`));
+  box.replaceChildren(
+    node('p', messages[result.type]), node('p', i18n.t('type.ic', { value: result.ic.toFixed(4) })));
   if (result.type === 'mono' || result.type === 'uncertain') {
     const links = [
       ['Frequency Analyzer', 'https://ipusiron.github.io/frequency-analyzer/'],
@@ -410,13 +419,7 @@ function displayCipherTypeAnalysis(result) {
 
 // ダークモード機能
 function initializeDarkMode() {
-  // ローカルストレージから設定を読み込み
-  let savedTheme = null;
-  try { savedTheme = localStorage.getItem('theme'); } catch { /* Storage may be unavailable. */ }
-  isDarkMode = savedTheme === 'dark';
-  
-  // 初期設定を適用
-  applyTheme();
+  isDarkMode = document.documentElement.dataset.theme === 'dark';
   updateDarkModeIcon();
 }
 
@@ -430,11 +433,11 @@ function toggleDarkMode() {
 }
 
 function applyTheme() {
-  const body = document.body;
+  const body = document.documentElement;
   if (isDarkMode) {
     body.setAttribute('data-theme', 'dark');
   } else {
-    body.removeAttribute('data-theme');
+    body.setAttribute('data-theme', 'light');
   }
 }
 
@@ -449,14 +452,15 @@ document.getElementById('dark-mode-toggle').addEventListener('click', toggleDark
 // ヘルプモーダル機能
 function openHelpModal() {
   const modal = document.getElementById('help-modal');
-  modal.hidden = false;
+  modal.showModal();
   document.body.classList.add('modal-open'); // スクロールを無効化
 }
 
 function closeHelpModal() {
   const modal = document.getElementById('help-modal');
-  modal.hidden = true;
-  document.body.classList.remove('modal-open'); // スクロールを復元
+  modal.close();
+  document.body.classList.remove('modal-open'); // Restore scrolling.
+  document.getElementById('help-button').focus();
 }
 
 // ヘルプボタンのイベントリスナー
@@ -476,7 +480,7 @@ document.getElementById('help-modal').addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const modal = document.getElementById('help-modal');
-    if (!modal.hidden) {
+    if (modal.open) {
       closeHelpModal();
     }
   }
@@ -526,3 +530,38 @@ document.getElementById("highlight-none-btn").addEventListener("click", () => {
 document.addEventListener('DOMContentLoaded', () => {
   initializeDarkMode();
 });
+
+
+dropZone.addEventListener('keydown', event => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    fileInput.click();
+  }
+});
+
+document.getElementById('help-modal').addEventListener('close', () => {
+  document.body.classList.remove('modal-open');
+  document.getElementById('help-button').focus();
+});
+
+document.getElementById('help-modal').addEventListener('keydown', event => {
+  if (event.key !== 'Tab') return;
+  const controls = [...event.currentTarget.querySelectorAll('button, a[href], [tabindex="0"]')]
+    .filter(element => element.getClientRects().length);
+  const first = controls[0];
+  const last = controls.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+
+// Preserve the analysis, enabled sequences, sorting and page on language changes.
+document.addEventListener('languagechange', () => {
+  if (analysis) renderAnalysis();
+  else if (messageState) showMessage(messageState.key, messageState.params);
+});
+i18n.initialize();

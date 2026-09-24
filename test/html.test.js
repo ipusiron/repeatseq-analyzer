@@ -37,3 +37,12 @@ test('external links, explicit button types and scroll regions', () => {
     assert.ok(html.includes(`id="${label[1]}"`));
   }
 });
+
+test('synchronous early theme, native dialog and centered desktop header', () => {
+  const head = html.match(/<head>[\s\S]*?<\/head>/)[0];
+  assert.match(head, /<script src="js\/theme-init.js"><\/script>/);
+  assert.ok(head.indexOf('theme-init.js') < head.indexOf('stylesheet'));
+  assert.match(html, /<dialog[^>]+aria-labelledby="help-title"/);
+  const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+  assert.match(css, /@media \(min-width: 769px\)[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\)/);
+});
