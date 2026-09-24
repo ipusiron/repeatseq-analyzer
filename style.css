@@ -185,7 +185,6 @@ button:hover {
   background: var(--section-bg);
   border: 1px solid var(--border-color);
   padding: 1rem;
-  white-space: pre-wrap;
   word-break: break-word;
   overflow-x: auto;
   border-radius: 5px;
@@ -1175,9 +1174,65 @@ th[aria-sort="descending"] button::after {
 }
 
 #input-message {
-  color: var(--error-text);
+  color: var(--text-color);
   background: var(--section-bg);
   overflow-wrap: anywhere;
+}
+
+#input-message.is-error {
+  color: var(--error-text);
+}
+
+#input-message.is-info {
+  color: var(--text-color);
+}
+
+#highlighted-text {
+  white-space: pre-wrap;
+}
+
+#cipher-type-result > p:first-child {
+  margin-top: 0;
+}
+
+#gap-diagram svg {
+  display: block;
+  width: 100%;
+  height: 140px;
+  background: var(--section-bg);
+}
+
+.gap-axis {
+  stroke: var(--text-color);
+}
+
+.gap-arc {
+  fill: none;
+  stroke: var(--link-text);
+  stroke-width: 3;
+}
+
+.gap-band {
+  fill: var(--error-text);
+}
+
+#gap-description,
+#guide-steps li {
+  overflow-wrap: anywhere;
+}
+
+#sample-select {
+  max-width: 100%;
+}
+
+@media (max-width: 480px) {
+  #kasiski-table th,
+  #column-ic-table th,
+  #guess-table th {
+    white-space: nowrap;
+    font-size: 0.85rem;
+    padding: 0.35rem;
+  }
 }
 
 #keylength-summary,

@@ -5,6 +5,24 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 const app = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
 
+test('sample loading, guide targets, accessible gap diagram and unique attributes', () => {
+  for (const id of ['sample-select', 'sample-load', 'guide-section', 'guide-steps', 'gap-diagram', 'gap-description']) {
+    assert.ok(html.includes(`id="${id}"`));
+  }
+  assert.match(html, /<script src="js\/samples.js"><\/script>/);
+  for (const id of ['input', 'type', 'repeat', 'key', 'guess']) {
+    assert.ok(html.includes(`id="${id}-heading" tabindex="-1"`));
+  }
+  const withoutComments = html.replace(/<!--[\s\S]*?-->/g, '');
+  for (const tag of withoutComments.matchAll(/<[a-z][^>]*>/gi)) {
+    const attributes = [...tag[0].matchAll(/\s([\w:-]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/g)].map(m => m[1].toLowerCase());
+    assert.equal(new Set(attributes).size, attributes.length, tag[0]);
+  }
+  assert.match(app, /createElementNS/);
+  assert.match(app, /'aria-labelledby': 'gap-description'/);
+  assert.match(app, /'aria-pressed'/);
+});
+
 test('key guess controls, live key, safe embedded samples and no network API', () => {
   for (const id of ['guess-section', 'guess-length', 'guess-reset', 'guess-table', 'trial-preview']) {
     assert.ok(html.includes(`id="${id}"`));

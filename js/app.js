@@ -13,6 +13,7 @@ let activeLengthFilters = new Set();
 let analysis = null;
 let guessState = null;
 let lettersText = '';
+let selectedSequence = null;
 
 // ダークモード設定
 let isDarkMode = false;
@@ -99,15 +100,19 @@ function node(tag, text = '', className = '') {
 
 let messageState = null;
 
-function showMessage(key, params = {}) {
-  messageState = { key, params };
-  document.getElementById('input-message').textContent = i18n.t(key, params);
+function showMessage(key, params = {}, kind = 'error') {
+  messageState = { key, params, kind };
+  const message = document.getElementById('input-message');
+  message.textContent = i18n.t(key, params);
+  message.classList.toggle('is-error', kind === 'error');
+  message.classList.toggle('is-info', kind === 'info');
 }
 
 function invalidateResults() {
   analysis = null;
   guessState = null;
   lettersText = '';
+  selectedSequence = null;
   allMatches = [];
   highlightEnabled.clear();
   document.querySelectorAll('[data-result]').forEach(el => { el.hidden = true; });
@@ -116,10 +121,11 @@ function invalidateResults() {
     '#cipher-type-result', '#highlighted-text', '#result-table tbody', '#statistics-summary',
     '#kasiski-table tbody', '#column-ic-table tbody', '#keylength-summary', '#friedman-result',
     '#length-filters', '#page-info', '#guess-length', '#guess-reason', '#guessed-key',
-    '#guess-table tbody', '#trial-preview', '#trial-count'
+    '#guess-table tbody', '#trial-preview', '#trial-count', '#gap-diagram', '#gap-description'
   ];
   staleSelectors.forEach(selector => document.querySelector(selector).replaceChildren());
-  showMessage('input.stale');
+  showMessage('input.stale', {}, 'info');
+  renderGuide();
 }
 
 cipherTextArea.addEventListener('input', invalidateResults);
@@ -145,6 +151,7 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
   lettersText = RepeatSeqCore.normalize(raw, true);
   setGuess(RepeatSeqCore.suggestedLength(analysis) ?? 1);
   allMatches = [...analysis.rows];
+  selectedSequence = allMatches[0]?.seq ?? null;
   currentPage = 1;
   currentSortColumn = 'len';
   sortDirection = 'desc';
@@ -156,7 +163,7 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
 function renderAnalysis() {
   if (!analysis) return;
   document.querySelectorAll('[data-result]').forEach(el => { el.hidden = false; });
-  showMessage('input.done', { n: analysis.rows.length });
+  showMessage('input.done', { n: analysis.rows.length }, 'info');
   const warning = document.getElementById('truncated-warning');
   warning.hidden = !analysis.truncated;
   displayCipherTypeAnalysis(analysis.cipherType);
@@ -167,6 +174,8 @@ function renderAnalysis() {
   renderStatisticsSummary();
   renderKeylengthHints();
   renderGuess();
+  renderDiagram();
+  renderGuide();
   updateSortIndicators();
 }
 
@@ -240,6 +249,20 @@ function renderTableWithPagination() {
     const chance = RepeatSeqCore.expectedByChance(analysis.text.length, len, analysis.kappa);
     [shortSequence(seq), len, count, shortList(positions), shortList(gaps),
       divisors.join(', ') || '—', chanceText(chance)].forEach(value => tr.appendChild(node('td', value)));
+    const diagramCell = node('td');
+    const diagramButton = node('button', i18n.t('diagram.button'));
+    diagramButton.type = 'button';
+    diagramButton.className = 'diagram-button';
+    diagramButton.setAttribute('aria-pressed', String(selectedSequence === seq));
+    diagramButton.addEventListener('click', () => {
+      selectedSequence = seq;
+      renderDiagram();
+      document.querySelectorAll('.diagram-button').forEach(button => {
+        button.setAttribute('aria-pressed', String(button === diagramButton));
+      });
+    });
+    diagramCell.appendChild(diagramButton);
+    tr.appendChild(diagramCell);
     tbody.appendChild(tr);
   });
   document.getElementById('pagination-controls').hidden = rows.length <= ITEMS_PER_PAGE;
@@ -577,7 +600,9 @@ document.getElementById('help-modal').addEventListener('keydown', event => {
 // Preserve the analysis, enabled sequences, sorting and page on language changes.
 document.addEventListener('languagechange', () => {
   if (analysis) renderAnalysis();
-  else if (messageState) showMessage(messageState.key, messageState.params);
+  else if (messageState) showMessage(messageState.key, messageState.params, messageState.kind);
+  renderGuide();
+  renderSamples();
 });
 function setGuess(L) {
   const result = RepeatSeqCore.guessKey(lettersText, L);
@@ -600,6 +625,7 @@ function renderTrial() {
   const plain = RepeatSeqCore.vigenereDecrypt(lettersText, key);
   document.getElementById('trial-preview').textContent = (plain.slice(0, 300).match(/.{1,5}/g) || []).join(' ');
   document.getElementById('trial-count').textContent = i18n.t('guess.total', { n: plain.length });
+  renderGuide();
 }
 
 function renderGuess() {
@@ -663,4 +689,98 @@ document.getElementById('guess-reset').addEventListener('click', () => {
   guessState.letters = [...guessState.result.key];
   renderGuess();
 });
+function renderGuide() {
+  const summaries = Array(5).fill(i18n.t('guide.pending'));
+  if (analysis) {
+    summaries[0] = i18n.t('guide.input', { n: analysis.text.length, m: lettersText.length });
+    summaries[1] = i18n.t('type.ic', { value: analysis.cipherType.ic.toFixed(4) }) + ' ' + i18n.t(`type.${analysis.cipherType.type}`);
+    summaries[2] = i18n.t('guide.repeats', { n: analysis.rows.length, len: analysis.rows[0]?.len ?? 0 });
+    summaries[3] = estimateSummary();
+    if (guessState) {
+      summaries[4] = i18n.t('guide.key', { key: guessState.letters.join(''), L: guessState.result.L });
+      if (guessState.letters.join('') !== guessState.result.key) summaries[4] += ' ' + i18n.t('guess.manual');
+    }
+  }
+  const list = document.getElementById('guide-steps');
+  list.replaceChildren();
+  ['input', 'type', 'repeat', 'key', 'guess'].forEach((id, index) => {
+    const item = node('li');
+    const button = node('button', i18n.t('guide.go'));
+    button.type = 'button';
+    button.disabled = index > 0 && !analysis;
+    button.addEventListener('click', () => {
+      const heading = document.getElementById(id + '-heading');
+      heading.focus({ preventScroll: true });
+      heading.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+    });
+    item.append(node('strong', i18n.t(`guide.step${index + 1}`)), node('p', summaries[index]), button);
+    list.appendChild(item);
+  });
+}
+
+function renderSamples() {
+  const select = document.getElementById('sample-select');
+  const current = select.value;
+  const placeholder = node('option', i18n.t('sample.choose'));
+  placeholder.value = '';
+  select.replaceChildren(placeholder);
+  RepeatSeqSamples.forEach(sample => {
+    const option = node('option', i18n.t(`sample.${sample.id}`));
+    option.value = sample.id;
+    select.appendChild(option);
+  });
+  select.value = current;
+}
+
+document.getElementById('sample-load').addEventListener('click', () => {
+  const sample = RepeatSeqSamples.find(s => s.id === document.getElementById('sample-select').value);
+  if (!sample) return;
+  cipherTextArea.value = sample.text;
+  document.getElementById('ignore-spaces').checked = true;
+  document.getElementById('analyze-btn').click();
+});
+
+function svgNode(tag, attributes) {
+  const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
+  return element;
+}
+
+function renderDiagram() {
+  const host = document.getElementById('gap-diagram');
+  const description = document.getElementById('gap-description');
+  host.replaceChildren();
+  description.replaceChildren();
+  const row = analysis?.rows.find(r => r.seq === selectedSequence);
+  if (!row) {
+    description.textContent = i18n.t('diagram.empty');
+    return;
+  }
+  const svg = svgNode('svg', { viewBox: '0 0 1000 140', role: 'img', 'aria-labelledby': 'gap-description' });
+  svg.appendChild(svgNode('line', { x1: 20, x2: 980, y1: 120, y2: 120, class: 'gap-axis' }));
+  const x = position => 20 + position / analysis.text.length * 960;
+  const largest = Math.max(...row.gaps);
+  row.gaps.slice(0, 12).forEach((gap, i) => {
+    const a = x(row.positions[i]), b = x(row.positions[i + 1]);
+    const height = Math.min(100, gap / largest * 100);
+    svg.appendChild(svgNode('path', { d: `M ${a} 120 Q ${(a + b) / 2} ${120 - height} ${b} 120`, class: 'gap-arc' }));
+  });
+  row.positions.forEach(position => {
+    svg.appendChild(svgNode('rect', { x: x(position), y: 116, width: Math.max(3, row.len / analysis.text.length * 960),
+      height: 8, class: 'gap-band' }));
+  });
+  host.appendChild(svg);
+  const positions = row.positions.slice(0, 20).join(', ') +
+    (row.positions.length > 20 ? ' ' + i18n.t('list.more', { n: row.positions.length - 20 }) : '');
+  const gaps = row.gaps.map((gap, i) => i18n.t('diagram.gap', { gap, from: row.positions[i], to: row.positions[i + 1] })).join(', ');
+  const divisors = [];
+  for (let k = 2; k <= analysis.kasiski.table.at(-1).k; k++) if (row.gaps.every(g => g % k === 0)) divisors.push(k);
+  description.append(node('p', i18n.t('diagram.sequence', { seq: shortSequence(row.seq) })),
+    node('p', i18n.t('diagram.positions', { positions })), node('p', i18n.t('diagram.gaps', { gaps })),
+    node('p', i18n.t('diagram.divisors', { divisors: divisors.join(', ') || '—' })));
+  if (row.gaps.length > 12) description.appendChild(node('p', i18n.t('diagram.omitted', { n: row.gaps.length - 12 })));
+}
+
 i18n.initialize();
+renderSamples();
+renderGuide();

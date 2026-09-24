@@ -5,6 +5,14 @@ const path = require('node:path');
 const { messages, helpSections } = require('../js/i18n.js');
 const root = path.resolve(__dirname, '..');
 
+test('guide, sample and diagram dynamic keys have matching translations', () => {
+  for (const lang of ['ja', 'en']) {
+    for (let n = 1; n <= 5; n++) assert.ok(messages[lang]['guide.step' + n]);
+    for (const id of ['caesar', 'shift', 'vigenere1', 'vigenere2', 'random']) assert.ok(messages[lang]['sample.' + id]);
+    for (const key of ['heading', 'positions', 'gaps', 'divisors', 'omitted']) assert.ok(messages[lang]['diagram.' + key]);
+  }
+});
+
 test('key guess translations exist in both languages', () => {
   for (const lang of ['ja', 'en']) {
     for (const key of ['heading', 'length', 'reset', 'label', 'manual', 'close', 'tooLong', 'multiple', 'note']) {
