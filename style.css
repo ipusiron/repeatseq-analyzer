@@ -1307,3 +1307,28 @@ a:hover,
     scroll-behavior: auto !important;
   }
 }
+/* Key guesses remain readable without expanding the page on small screens. */
+#guessed-key {
+    font-family: monospace;
+    font-size: 1.6rem;
+    white-space: nowrap;
+    overflow-x: auto;
+}
+
+#trial-preview {
+    overflow-wrap: anywhere;
+}
+
+#guess-table {
+    min-width: 780px;
+}
+
+#guess-table a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+.manual-marker {
+    display: block;
+}

@@ -149,6 +149,28 @@
         <p id="friedman-result"></p>
       </div>
     </section>
+    <section id="guess-section" data-result hidden>
+      <h2 id="guess-heading" data-i18n="guess.heading">🔑 鍵の推定と試し読み</h2>
+      <label for="guess-length" data-i18n="guess.length">試す鍵長</label>
+      <select id="guess-length"></select>
+      <p id="guess-reason"></p>
+      <p id="guessed-key" aria-live="polite"></p>
+      <button type="button" id="guess-reset" data-i18n="guess.reset">推定に戻す</button>
+      <p id="trial-preview" class="output-box"></p>
+      <p id="trial-count"></p>
+      <p data-i18n="guess.note">ヴィジュネル暗号（加算）を仮定しています。ボーフォート暗号などでは読めません。</p>
+      <div class="table-scroll" role="region" tabindex="0" aria-label="鍵の列の表" data-i18n-aria-label="guess.region">
+        <table id="guess-table">
+          <thead><tr>
+            <th data-i18n="guess.column">列</th><th data-i18n="guess.n">文字数</th><th>IC</th>
+            <th data-i18n="guess.letter">鍵の文字</th><th data-i18n="guess.best">1位（χ²）</th>
+            <th data-i18n="guess.second">2位（χ²）</th><th data-i18n="guess.close">接戦</th>
+            <th data-i18n="guess.frequency">頻度分析</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <footer>

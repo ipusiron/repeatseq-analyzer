@@ -11,6 +11,8 @@ let sortDirection = 'desc'; // 'asc' or 'desc'
 let activeLengthFilters = new Set();
 
 let analysis = null;
+let guessState = null;
+let lettersText = '';
 
 // ダークモード設定
 let isDarkMode = false;
@@ -104,6 +106,8 @@ function showMessage(key, params = {}) {
 
 function invalidateResults() {
   analysis = null;
+  guessState = null;
+  lettersText = '';
   allMatches = [];
   highlightEnabled.clear();
   document.querySelectorAll('[data-result]').forEach(el => { el.hidden = true; });
@@ -111,7 +115,8 @@ function invalidateResults() {
   const staleSelectors = [
     '#cipher-type-result', '#highlighted-text', '#result-table tbody', '#statistics-summary',
     '#kasiski-table tbody', '#column-ic-table tbody', '#keylength-summary', '#friedman-result',
-    '#length-filters', '#page-info'
+    '#length-filters', '#page-info', '#guess-length', '#guess-reason', '#guessed-key',
+    '#guess-table tbody', '#trial-preview', '#trial-count'
   ];
   staleSelectors.forEach(selector => document.querySelector(selector).replaceChildren());
   showMessage('input.stale');
@@ -137,6 +142,8 @@ document.getElementById('analyze-btn').addEventListener('click', () => {
     return;
   }
   analysis = RepeatSeqCore.analyze(raw, { lettersOnly, maxK });
+  lettersText = RepeatSeqCore.normalize(raw, true);
+  setGuess(RepeatSeqCore.suggestedLength(analysis) ?? 1);
   allMatches = [...analysis.rows];
   currentPage = 1;
   currentSortColumn = 'len';
@@ -159,6 +166,7 @@ function renderAnalysis() {
   renderHighlights();
   renderStatisticsSummary();
   renderKeylengthHints();
+  renderGuess();
   updateSortIndicators();
 }
 
@@ -414,7 +422,7 @@ function displayCipherTypeAnalysis(result) {
     ];
     links.forEach(([text, href]) => {
       const link = node('a', text);
-      link.href = href;
+      link.href = text === 'Frequency Analyzer' && lettersText.length <= 5000 ? href + '?text=' + encodeURIComponent(lettersText) : href;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       const paragraph = node('p');
@@ -570,5 +578,89 @@ document.getElementById('help-modal').addEventListener('keydown', event => {
 document.addEventListener('languagechange', () => {
   if (analysis) renderAnalysis();
   else if (messageState) showMessage(messageState.key, messageState.params);
+});
+function setGuess(L) {
+  const result = RepeatSeqCore.guessKey(lettersText, L);
+  guessState = { result, letters: [...result.key] };
+}
+
+function guessReason() {
+  const k = analysis.kasiski.best, L = analysis.columnIC.best;
+  if (L === 1) return i18n.t('guess.mono');
+  if (k !== null && k === L) return i18n.t('guess.agree');
+  if (k !== null && L !== null && (k % L === 0 || L % k === 0)) return i18n.t('guess.multiple');
+  if (k !== null) return i18n.t('guess.kasiski');
+  if (L !== null) return i18n.t('guess.ic');
+  return i18n.t('guess.none');
+}
+
+function renderTrial() {
+  const key = guessState.letters.join('');
+  document.getElementById('guessed-key').textContent = key;
+  const plain = RepeatSeqCore.vigenereDecrypt(lettersText, key);
+  document.getElementById('trial-preview').textContent = (plain.slice(0, 300).match(/.{1,5}/g) || []).join(' ');
+  document.getElementById('trial-count').textContent = i18n.t('guess.total', { n: plain.length });
+}
+
+function renderGuess() {
+  if (!guessState) return;
+  const length = document.getElementById('guess-length');
+  length.replaceChildren();
+  for (let L = 1; L <= analysis.kasiski.table.at(-1).k; L++) {
+    const option = node('option', L);
+    option.value = L;
+    length.appendChild(option);
+  }
+  length.value = guessState.result.L;
+  document.getElementById('guess-reason').textContent = guessReason();
+  const body = document.querySelector('#guess-table tbody');
+  body.replaceChildren();
+  guessState.result.columns.forEach(col => {
+    const row = node('tr');
+    const select = node('select');
+    select.setAttribute('aria-label', i18n.t('guess.label', { n: col.index + 1 }));
+    for (const letter of RepeatSeqCore.ALPHA) {
+      const option = node('option', letter);
+      option.value = letter;
+      select.appendChild(option);
+    }
+    select.value = guessState.letters[col.index];
+    const manual = node('span', select.value !== col.best.letter ? i18n.t('guess.manual') : '', 'manual-marker');
+    select.addEventListener('change', () => {
+      guessState.letters[col.index] = select.value;
+      manual.textContent = select.value !== col.best.letter ? i18n.t('guess.manual') : '';
+      renderTrial();
+    });
+    const control = node('td');
+    control.append(select, manual);
+    row.append(node('td', col.index + 1), node('td', col.n), node('td', col.ic.toFixed(4)), control,
+      node('td', col.best.letter + ' (' + col.best.chi.toFixed(1) + ')'),
+      node('td', col.second.letter + ' (' + col.second.chi.toFixed(1) + ')'),
+      node('td', col.second.chi < RepeatSeqCore.CLOSE_RATIO * col.best.chi ? i18n.t('guess.close') : '—', 'close-marker'));
+    const destination = node('td');
+    if (col.n <= 5000) {
+      const link = node('a', i18n.t('guess.open'));
+      link.href = 'https://ipusiron.github.io/frequency-analyzer/?text=' + encodeURIComponent(col.text);
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      destination.appendChild(link);
+    } else destination.textContent = i18n.t('guess.tooLong');
+    row.appendChild(destination);
+    body.appendChild(row);
+  });
+  renderTrial();
+}
+
+document.getElementById('guess-length').addEventListener('change', event => {
+  if (!analysis) return;
+  const L = Number(event.target.value);
+  if (!Number.isInteger(L) || L < 1 || L > analysis.kasiski.table.at(-1).k) return;
+  setGuess(L);
+  renderGuess();
+});
+document.getElementById('guess-reset').addEventListener('click', () => {
+  if (!guessState) return;
+  guessState.letters = [...guessState.result.key];
+  renderGuess();
 });
 i18n.initialize();

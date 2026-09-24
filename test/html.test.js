@@ -5,6 +5,17 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 const app = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
 
+test('key guess controls, live key, safe embedded samples and no network API', () => {
+  for (const id of ['guess-section', 'guess-length', 'guess-reset', 'guess-table', 'trial-preview']) {
+    assert.ok(html.includes(`id="${id}"`));
+  }
+  assert.match(html, /id="guessed-key" aria-live="polite"/);
+  for (const file of ['app.js', 'samples.js']) {
+    const source = fs.readFileSync(path.join(__dirname, '../js', file), 'utf8');
+    assert.doesNotMatch(source, /\bfetch\s*\(|XMLHttpRequest|innerHTML/);
+  }
+});
+
 test('strict CSP, referrer and no-script guidance', () => {
   const meta = html.match(/<meta\s+http-equiv="Content-Security-Policy"[^>]+>/)[0];
   assert.match(meta, /default-src 'self'/);
