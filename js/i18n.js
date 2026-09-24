@@ -316,6 +316,19 @@ const messages = {
 const helpSections = {
   "ja": [
     {
+      "heading": "鍵の推定・サンプル・間隔図",
+      "paragraphs": [
+        "同梱サンプル5つを選んで読み込めます。手順の5段は解析から要約し、「ここへ」で見出しに移動します。表の「図」で反復の出現位置・間隔・公約数を確認できます。",
+        "鍵の推定はA-Zだけを列に分け、Day009と同じ英文頻度でχ²=Σ(観測数−期待数)²/期待数を最小にします。同点はAに近い文字です。2位が1位の1.5倍未満なら接戦で、1位が0なら接戦にしません。",
+        "既定の鍵長は列ICが1なら1、一致ならその値、倍数なら小さいほう、それ以外はカシスキー、片方だけならその値、両方なしなら1です。",
+        "caesarは1/D、shiftは1/Q、vigenere1は5/LEMON、vigenere2は14/KNOWLEDGEISKEY、randomは推定なし（1で試してQ）です。",
+        "vigenere1の先頭150文字ではカシスキー20・列IC5から鍵長5、鍵LEIONです。3列目のI（44.9）とM（63.6）が接戦で、Mに変えると読めます。200文字ではLEMONです。",
+        "鍵文字の修正で試し読みが即時に変わります。「推定に戻す」で全列を戻します。鍵長の変更は手修正を破棄し、言語切り替えは保持します。",
+        "ヴィジュネル暗号（加算）を仮定し、ボーフォート暗号などは対象外です。試し読みは先頭300文字を5文字区切りで表示し、全文の文字数を添えます。",
+        "各列をDay009へ?text=で渡せます。5,000文字を超える列は渡せません。入力と結果を保存せず、リンクを押すまで外部通信しません。"
+      ]
+    },
+    {
       "heading": "概要",
       "paragraphs": [
         "極大反復は、左右に伸ばせない出現の組を持つ、長さ3以上の反復文字列です。全出現位置を重なりも含めて数え、隣り合う位置の差を間隔とします。",
@@ -355,12 +368,33 @@ const helpSections = {
     {
       "heading": "事前判定と制限",
       "paragraphs": [
-        "事前判定はA-Zだけで計算し、100文字未満はデータ不足、ICが0.060を超えると単一換字、0.045未満は多表式、その間は判定困難です。",
+        "事前判定はA-Zだけで計算し、100文字未満はデータ不足、ICが0.060を超えると単一換字、0.045未満は多表式またはランダムに近い文字列、その間は判定困難です。",
         "同じ文字の連続などで候補が多すぎると、候補の文字数200万または出現位置20万の上限で打ち切ります。言語とテーマだけを同じブラウザー内に保存します。"
       ]
     }
   ],
   "en": [
+    {
+      "heading": "Key guesses, samples and gap diagrams",
+      "paragraphs": [
+        "Load any of five bundled samples. The five steps summarize analysis; Go here focuses each heading. " +
+          "Diagram buttons show occurrence bands, adjacent gaps and common divisors.",
+        "A–Z columns use Day009 English frequencies to minimize χ² = Σ(observed−expected)²/expected, with ties toward A. " +
+          "A second-best value below 1.5 times the best is a close contest, except when the best is zero.",
+        "The default is 1 when column IC suggests 1, then agreement, then the smaller of multiples, then Kasiski. " +
+          "Use the only available estimate, or try 1 if neither is available.",
+        "Defaults/keys: caesar 1/D; shift 1/Q; vigenere1 5/LEMON; vigenere2 14/KNOWLEDGEISKEY; " +
+          "random has no estimate (try 1, producing Q).",
+        "With 150 letters of vigenere1, Kasiski 20 and column IC 5 select length 5 and LEION. " +
+          "Column 3 has I (44.9) versus M (63.6); changing to M makes it readable. At 200 letters the guess is LEMON.",
+        "Editing letters immediately updates the preview. Reset to guess restores all columns. " +
+          "Changing length discards edits; changing language preserves them.",
+        "Trial decryption assumes additive Vigenere, not Beaufort or other variants. " +
+          "It shows up to 300 letters in groups of five, plus the total plaintext length.",
+        "Pass each column to Day009 through ?text=. Columns over 5,000 letters cannot be transferred. " +
+          "Input and results are not saved; external requests occur only when you activate a link."
+      ]
+    },
     {
       "heading": "Overview",
       "paragraphs": [
@@ -415,7 +449,7 @@ const helpSections = {
       "heading": "Classification and limits",
       "paragraphs": [
         "Classification uses A–Z only: fewer than 100 letters is insufficient; IC above 0.060 suggests monoal" +
-      "phabetic substitution, below 0.045 suggests a polyalphabetic cipher, and intermediate values are unc" +
+      "phabetic substitution, below 0.045 suggests a polyalphabetic cipher or near-random string, and intermediate values are unc" +
       "ertain.",
         "Degenerate inputs may be truncated at 2,000,000 candidate characters or 200,000 occurrence positions" +
       ". Only language and theme preferences are stored in the same browser."

@@ -20,8 +20,40 @@ const kinds = { ja: ['シーザー', 'シフト', 'ヴィジュネル', 'ヴィ�
   en: ['Caesar', 'Shift', 'Vigenere', 'Vigenere', 'Random'] };
 
 for (const lang of ['ja', 'en']) {
+  test(`${lang}: key guess table and short examples match core calculations`, () => {
+    const heading = lang === 'ja' ? '### 鍵の推定と試し読み' : '### Key Guess and Trial Decryption';
+    const section = docs[lang].split(heading)[1].split('\n### ')[0];
+    const lines = section.split('\n').filter(line => /^\| (caesar|shift|vigenere1|vigenere2|random) \|/.test(line));
+    assert.equal(lines.length, 5);
+    lines.forEach((line, i) => {
+      const name = names[i];
+      const text = core.normalize(read(`samples/${name}/${name === 'random' ? 'random' : 'ciphertext'}.txt`));
+      const L = core.suggestedLength(core.analyze(text));
+      const guess = core.guessKey(text, L ?? 1);
+      const label = L === null ? (lang === 'ja' ? '—（1で試す）' : '— (try 1)') : String(L);
+      assert.deepEqual(line.split('|').slice(1, -1).map(v => v.trim()),
+        [name, label, guess.key, core.vigenereDecrypt(text, guess.key).slice(0, 30)]);
+    });
+    const shortHeading = lang === 'ja' ? '### 短い暗号文での外れ方' : '### When the Ciphertext Is Short';
+    const shortSection = docs[lang].split(shortHeading)[1].split('\n### ')[0];
+    const rows = shortSection.split('\n').filter(line => /^\| (100|150|200) \|/.test(line));
+    assert.equal(rows.length, 3);
+    rows.forEach((row, i) => {
+      const n = [100, 150, 200][i];
+      const text = core.normalize(read('samples/vigenere1/ciphertext.txt')).slice(0, n);
+      const a = core.analyze(text), guess = core.guessKey(text, 5);
+      const close = guess.columns.filter(c => c.second.chi < core.CLOSE_RATIO * c.best.chi).map(c => c.index + 1);
+      assert.deepEqual(row.split('|').slice(1, -1).map(v => v.trim()),
+        [n, a.kasiski.best, a.columnIC.best, core.suggestedLength(a), guess.key, close.join(', ') || '—'].map(String));
+    });
+    const short = core.normalize(read('samples/vigenere1/ciphertext.txt')).slice(0, 150);
+    const col = core.guessKey(short, 5).columns[2];
+    for (const value of [col.best.letter, col.best.chi.toFixed(1), col.second.letter, col.second.chi.toFixed(1)]) {
+      assert.ok(shortSection.includes(value), value);
+    }
+  });
   test(`${lang}: five complete known-answer rows recalculated from fixtures`, () => {
-    const lines = docs[lang].split('\n').filter(line => /^\| (caesar|shift|vigenere1|vigenere2|random) \|/.test(line));
+    const lines = docs[lang].split('\n').filter(line => /^\| (caesar|shift|vigenere1|vigenere2|random) \| `samples\//.test(line));
     assert.equal(lines.length, 5);
     lines.forEach((line, i) => {
       const name = names[i];
@@ -67,11 +99,12 @@ for (const lang of ['ja', 'en']) {
     assert.deepEqual(files.sort(), [...new Set(gitFiles)].sort());
   });
 
-  test(`${lang}: exactly three existing PNG images and captions with exact sizes`, () => {
+  test(`${lang}: exactly five existing PNG images and captions with exact sizes`, () => {
     const images = [...docs[lang].matchAll(/!\[[^\]]*\]\((assets\/[^)]+\.png)\)/g)].map(m => m[1]);
-    assert.deepEqual(images, ['assets/screenshot.png', 'assets/screenshot2.png', 'assets/screenshot3.png']);
+    assert.deepEqual(images, ['assets/screenshot.png', 'assets/screenshot2.png', 'assets/screenshot3.png',
+      'assets/screenshot4.png', 'assets/screenshot5.png']);
     const captions = docs[lang].split('\n').filter(line => /^> \*.+\*$/.test(line));
-    assert.equal(captions.length, 3);
+    assert.equal(captions.length, 5);
     images.forEach((file, i) => {
       const bytes = fs.readFileSync(path.join(root, file));
       const dimensions = `${bytes.readUInt32BE(16)}×${bytes.readUInt32BE(20)}`;
