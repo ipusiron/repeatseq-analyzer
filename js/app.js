@@ -120,7 +120,7 @@ function invalidateResults() {
   const staleSelectors = [
     '#cipher-type-result', '#highlighted-text', '#result-table tbody', '#statistics-summary',
     '#kasiski-table tbody', '#column-ic-table tbody', '#keylength-summary', '#friedman-result',
-    '#length-filters', '#page-info', '#guess-length', '#guess-reason', '#guessed-key',
+    '#length-filters', '#page-info', '#guess-length', '#guess-reason', '#divider-link', '#guessed-key',
     '#guess-table tbody', '#trial-preview', '#trial-count', '#gap-diagram', '#gap-description'
   ];
   staleSelectors.forEach(selector => document.querySelector(selector).replaceChildren());
@@ -628,6 +628,23 @@ function renderTrial() {
   renderGuide();
 }
 
+// Hand the letters and the chosen key length to Day030 Modular Text Divider (it accepts n up to 20).
+function renderDividerLink(L) {
+  const box = document.getElementById('divider-link');
+  box.replaceChildren();
+  if (L > 20) {
+    box.textContent = i18n.t('guess.dividerTooLong');
+    return;
+  }
+  const link = node('a', i18n.t('guess.divider', { n: L }));
+  const lang = document.documentElement.lang === 'en' ? 'en' : 'ja';
+  link.href = 'https://ipusiron.github.io/modular-text-divider/?text=' + encodeURIComponent(lettersText) +
+    '&n=' + L + '&lang=' + lang;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  box.appendChild(link);
+}
+
 function renderGuess() {
   if (!guessState) return;
   const length = document.getElementById('guess-length');
@@ -639,6 +656,7 @@ function renderGuess() {
   }
   length.value = guessState.result.L;
   document.getElementById('guess-reason').textContent = guessReason();
+  renderDividerLink(guessState.result.L);
   const body = document.querySelector('#guess-table tbody');
   body.replaceChildren();
   guessState.result.columns.forEach(col => {
