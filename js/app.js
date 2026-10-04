@@ -445,7 +445,8 @@ function displayCipherTypeAnalysis(result) {
     ];
     links.forEach(([text, href]) => {
       const link = node('a', text);
-      link.href = text === 'Frequency Analyzer' && lettersText.length <= 5000 ? href + '?text=' + encodeURIComponent(lettersText) : href;
+      // Pass after "#": it is not sent to the server and has no URL length limit (Day009 reads #text= first).
+      link.href = text === 'Frequency Analyzer' && lettersText.length <= 5000 ? href + '#text=' + encodeURIComponent(lettersText) : href;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       const paragraph = node('p');
@@ -638,8 +639,9 @@ function renderDividerLink(L) {
   }
   const link = node('a', i18n.t('guess.divider', { n: L }));
   const lang = document.documentElement.lang === 'en' ? 'en' : 'ja';
-  link.href = 'https://ipusiron.github.io/modular-text-divider/?text=' + encodeURIComponent(lettersText) +
-    '&n=' + L + '&lang=' + lang;
+  // The letters and n go after "#" (not sent to the server; "?" over 8,192 bytes gets 414 on GitHub Pages). lang stays in "?".
+  link.href = 'https://ipusiron.github.io/modular-text-divider/?lang=' + lang + '#text=' + encodeURIComponent(lettersText) +
+    '&n=' + L;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   box.appendChild(link);
@@ -684,7 +686,7 @@ function renderGuess() {
     const destination = node('td');
     if (col.n <= 5000) {
       const link = node('a', i18n.t('guess.open'));
-      link.href = 'https://ipusiron.github.io/frequency-analyzer/?text=' + encodeURIComponent(col.text);
+      link.href = 'https://ipusiron.github.io/frequency-analyzer/#text=' + encodeURIComponent(col.text);
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       destination.appendChild(link);

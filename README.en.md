@@ -186,8 +186,9 @@ GitHub Pages does not support arbitrary response headers, so protection against 
 
 ## 🔗 Related Tools
 
-Each key column can be passed to Day009 Frequency Analyzer through `?text=`. Columns over 5,000 letters show a reason instead of a link.
+Each key column can be passed to Day009 Frequency Analyzer through `#text=`. Columns over 5,000 letters show a reason instead of a link.
 The classification link also includes A–Z input when no longer than 5,000 letters. No external request occurs until a link is activated.
+Modular Text Divider (Day030) receives the letters and key length as `?lang=…#text=…&n=…`. The ciphertext and key length go after `#`, so they are not sent to the server and are not subject to the URL length limit (GitHub Pages accepts up to 8,192 bytes for the path and the part after `?`).
 
 - [Caesar Cipher Wheel Tool](https://github.com/ipusiron/caesar-cipher-wheel): Caesar cipher visualization
 - [Caesar Cipher Breaker](https://github.com/ipusiron/caesar-cipher-breaker): brute-force Caesar deciphering

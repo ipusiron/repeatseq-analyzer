@@ -105,7 +105,8 @@ At 200 letters the guess is LEMON. Never alter existing cryptographic expectatio
 Always use normalized A-Z for guesses, irrespective of the symbol setting. Trial decryption assumes additive Vigenere.
 Render the first 300 letters in five-letter groups, with total length. Manual edits update the preview without reanalysis.
 Changing length discards edits; changing language preserves them. Input changes clear all stale results.
-Day009 links use ?text= plus encodeURIComponent, with a 5,000-letter limit, target=_blank and noopener noreferrer.
+Day009 links use #text= plus encodeURIComponent (after #, so not sent to the server), with a 5,000-letter limit, target=_blank and noopener noreferrer.
+The Day030 link is ?lang=…#text=…&n=… (letters and n after #; GitHub Pages returns 414 when the path and query exceed 8,192 bytes).
 Keep samples.js mechanically generated from fixtures, with no answer keys, plaintext or type metadata.
 Do not use fetch or XMLHttpRequest: embedded classic scripts must work under file://.
 The five-step guide derives its state from analysis and key edits; it has no separate persisted state.
