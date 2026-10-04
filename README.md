@@ -223,8 +223,9 @@ GitHub Pagesでは任意のHTTP応答ヘッダーを設定できないため、�
 
 ## 🔗 関連ツール
 
-鍵の各列をDay009 Frequency Analyzerへ`?text=`で渡せます。5,000文字を超える列はリンクを出さず、理由を表示します。
+鍵の各列をDay009 Frequency Analyzerへ`#text=`で渡せます。5,000文字を超える列はリンクを出さず、理由を表示します。
 事前判定のFrequency Analyzerリンクにも、A-Zだけで5,000文字以下なら本文を付けます。リンクを押すまで外部通信しません。
+Modular Text Divider（Day030）へは、英字と鍵長を`?lang=…#text=…&n=…`の形で渡します。暗号文と鍵長は`#`より後ろに入れるので、サーバーへ送られず、URLの長さの上限（GitHub Pagesはパスと`?`以降で8,192バイトまで）も受けません。
 
 - [Caesar Cipher Wheel Tool](https://github.com/ipusiron/caesar-cipher-wheel)：シーザー暗号の可視化
 - [Caesar Cipher Breaker](https://github.com/ipusiron/caesar-cipher-breaker)：シーザー暗号の総当たり解読

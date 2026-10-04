@@ -75,3 +75,10 @@ test('synchronous early theme, native dialog and centered desktop header', () =>
   const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
   assert.match(css, /@media \(min-width: 769px\)[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\)/);
 });
+
+test('links to Day009 and Day030 pass the letters after "#" (not sent to the server), and a favicon stops the extra request', () => {
+  assert.ok(!app.includes('?text='));
+  assert.equal(app.split("#text=' +").length - 1, 3);
+  assert.ok(app.includes("'https://ipusiron.github.io/modular-text-divider/?lang=' + lang + '#text='"));
+  assert.ok(html.includes('<link rel="icon" href="data:,">'));
+});

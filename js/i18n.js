@@ -329,7 +329,7 @@ const helpSections = {
         "vigenere1の先頭150文字ではカシスキー20・列IC5から鍵長5、鍵LEIONです。3列目のI（44.9）とM（63.6）が接戦で、Mに変えると読めます。200文字ではLEMONです。",
         "鍵文字の修正で試し読みが即時に変わります。「推定に戻す」で全列を戻します。鍵長の変更は手修正を破棄し、言語切り替えは保持します。",
         "ヴィジュネル暗号（加算）を仮定し、ボーフォート暗号などは対象外です。試し読みは先頭300文字を5文字区切りで表示し、全文の文字数を添えます。",
-        "各列をDay009へ?text=で渡せます。5,000文字を超える列は渡せません。入力と結果を保存せず、リンクを押すまで外部通信しません。"
+        "各列をDay009へ#text=で渡せます（「#」より後ろはサーバーへ送られません）。5,000文字を超える列は渡せません。入力と結果を保存せず、リンクを押すまで外部通信しません。"
       ]
     },
     {
@@ -395,7 +395,7 @@ const helpSections = {
           "Changing length discards edits; changing language preserves them.",
         "Trial decryption assumes additive Vigenere, not Beaufort or other variants. " +
           "It shows up to 300 letters in groups of five, plus the total plaintext length.",
-        "Pass each column to Day009 through ?text=. Columns over 5,000 letters cannot be transferred. " +
+        "Pass each column to Day009 through #text= (the part after # is not sent to the server). Columns over 5,000 letters cannot be transferred. " +
           "Input and results are not saved; external requests occur only when you activate a link."
       ]
     },
