@@ -9,10 +9,10 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const docs = { ja: read('README.md'), en: read('README.en.md') };
 const headings = {
   ja: ['🌐 デモページ', '📸 スクリーンショット', '✨ 機能', '📖 使い方', '❓ なぜ反復文字列を特定するのか',
-    '🔬 解析の方法と既知解答', '🔒 セキュリティ', '🔗 関連ツール', '📚 参考', '🧪 テスト', '📁 ディレクトリー構造',
+    '🔬 解析の方法と既知解答', '🎯 ユースケース', '🔒 セキュリティ', '🔗 関連ツール', '📚 参考', '🧪 テスト', '📁 ディレクトリー構造',
     '💻 動作環境', '📄 ライセンス', '🛠️ このツールについて'],
   en: ['🌐 Demo', '📸 Screenshots', '✨ Features', '📖 Usage', '❓ Why Find Repeated Sequences',
-    '🔬 Methods and Known Answers', '🔒 Security', '🔗 Related Tools', '📚 References', '🧪 Tests',
+    '🔬 Methods and Known Answers', '🎯 Use cases', '🔒 Security', '🔗 Related Tools', '📚 References', '🧪 Tests',
     '📁 Directory Structure', '💻 Requirements', '📄 License', '🛠️ About This Tool']
 };
 const names = ['caesar', 'shift', 'vigenere1', 'vigenere2', 'random'];
@@ -152,4 +152,20 @@ test('no runtime dependencies or old tracked scaffolding', () => {
   assert.match(workflow, /actions\/setup-node@v4/);
   assert.match(workflow, /node-version: 22/);
   assert.match(workflow, /run: npm test/);
+});
+
+test('ユースケースの「このツールならではの使い方」を repeatseq-core.js で再計算（日英）', () => {
+  const read2 = (name, file) => core.normalize(read(`samples/${name}/${file}`));
+  const caesar = core.analyze(read2('caesar', 'ciphertext.txt'));
+  assert.deepEqual([caesar.cipherType.type, Number(caesar.cipherType.ic.toFixed(4))], ['mono', 0.0651]);
+  const random = core.analyze(read2('random', 'random.txt'));
+  assert.deepEqual([random.cipherType.type, Number(random.cipherType.ic.toFixed(4))], ['poly', 0.0384]);
+  const v1 = core.analyze(read2('vigenere1', 'ciphertext.txt'));
+  const v2 = core.analyze(read2('vigenere2', 'ciphertext.txt'));
+  assert.deepEqual([v1.kasiski.best, v1.columnIC.best], [5, 5]);
+  assert.deepEqual([v2.kasiski.best, v2.columnIC.best], [14, 14]);
+  for (const md of Object.values(docs)) {
+    assert.ok(md.includes('0.0651') && md.includes('0.0384'));
+    assert.ok(md.includes('5') && md.includes('14'));
+  }
 });

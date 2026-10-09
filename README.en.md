@@ -173,6 +173,20 @@ Key estimates use ratios and column IC instead of raw divisor counts, and an uns
 Null means no estimate meets the method's rule. Random is a comparison fixture, not a cipher.
 Load a sample using the selector, paste its contents or select the corresponding file.
 
+## 🎯 Use cases
+
+### Ways of using this tool in particular
+
+- Confirming that the index of coincidence (IC) tells a simple substitution from a polyalphabetic cipher (statistics and cryptanalysis classes): the sample Caesar cipher has an IC of 0.0651, close to English's 0.0667, and is reported as "mono". Random letters have an IC of 0.0384, close to 1/26 (about 0.0385), and are reported as "poly". You can confirm, with a single number, telling whether the letter bias remains or is flat
+- Confirming that the Kasiski method guesses the key length (cryptanalysis classes): the spacing between repeated sequences tends to be a multiple of the key length. For the sample vigenere1 the Kasiski method guesses a key length of 5 from the common divisor of the spacings, and 14 for vigenere2. You can confirm, on real ciphertext, the classic method of estimating the key length from the spacing of repeats
+- Confirming the key length with the per-column IC (statistics classes): for each candidate key length, split the text into columns and look for the length where the average IC of the columns is closest to English. For vigenere1 the per-column IC is best at a key length of 5 and for vigenere2 at 14, both agreeing with the Kasiski method. You can confirm the confidence of the estimate when two separate methods point to the same key length
+
+### General uses
+
+- Learn Vigenere key-length estimation (Kasiski, the Friedman formula and the per-column IC)
+- Make a first guess in a CTF classical-cipher problem whether the ciphertext is a simple substitution or polyalphabetic
+- Use it as material to compare the index of coincidence across English, random and ciphertext
+
 ## 🔒 Security
 
 Analysis is entirely client-side, and the application makes no external requests.
