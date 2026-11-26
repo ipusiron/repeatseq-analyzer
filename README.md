@@ -18,7 +18,7 @@ category_en:
   - Cryptanalysis
   - Classical Cryptography
 
-difficulty: 4
+difficulty: 3
 
 tags:
   - kasiski
